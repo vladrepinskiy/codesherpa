@@ -1,0 +1,37 @@
+version: "3"
+
+services:
+  # Next.js application with Bun
+  nextapp:
+    build:
+      context: .
+      dockerfile: Dockerfile.nextjs
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./:/app
+      - /app/node_modules
+      - /app/.next
+    environment:
+      - CHROMA_API_URL=http://chromadb:8000
+      - NEXT_PUBLIC_SUPABASE_URL=${SUPABASE_URL:-http://your-supabase-url}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY:-your-supabase-anon-key}
+    depends_on:
+      - chromadb
+    # Enable hot reloading support in Docker
+    command: bun run dev
+
+  # ChromaDB service
+  chromadb:
+    image: ghcr.io/chroma-core/chroma:latest
+    volumes:
+      - ./docker-volumes/chroma:/chroma/chroma
+    ports:
+      - "8000:8000"
+    environment:
+      - ALLOW_RESET=true
+      - ANONYMIZED_TELEMETRY=false
+
+volumes:
+  chroma_data:
+    driver: local

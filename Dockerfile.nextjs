@@ -1,0 +1,18 @@
+FROM oven/bun:latest as base
+
+WORKDIR /app
+
+# Copy package files
+COPY package.json bun.lockb ./
+
+# Install dependencies
+RUN bun install --frozen-lockfile
+
+# Copy the rest of the application
+COPY . .
+
+# Build the application
+RUN bun run build
+
+# Start the application in development mode
+CMD ["bun", "run", "dev"]
