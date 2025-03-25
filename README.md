@@ -1,36 +1,88 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CodeSherpa
+
+### AI-Powered GitHub Repository Onboarding Assistant
+
+CodeSherpa is a prototype tool, that should help developers quickly understand and navigate unfamiliar github codebases. By leveraging large language models and semantic search, it provides personalized guidance and answers questions about repository structure, code patterns, and development history.
+
+### Features:
+
+- Repository Analysis: Import GitHub repositories and analyze code, commits, issues, and documentation
+- AI Chat Interface: Ask natural language questions about the codebase and receive contextual answers
+- Intelligent Code Exploration: Understand code structure, dependencies, and architectural patterns
+- Onboarding Path Generation: Receive customized "getting started" recommendations and paths through the codebase
+
+### Tech Stack:
+
+- Frontend: Next.js 14, React, Tailwind CSS, shadcn/ui for some complex components
+- Vector Search: ChromaDB for vector stores and semantic code search
+- AI/LLM: OpenAI API for intelligent responses
+- Embedding: Sentence Transformers for code embedding
+- Authentication: Supabase Auth
+- Bringing it together: Docker + Docker Compose
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- Docker and Docker Compose
+- Supabase account (for authentication)
+- OpenAI API key
+
+### Installation
+
+Clone the repository:
+
+```shell
+    git clone https://github.com/yourusername/code-sherpa.git
+    cd code-sherpa
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Create a .env file using the env.example (run `cp .env.example .env`), and add your API keys to the .env file:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```env
+SUPABASE_URL=your_supabase_url_here
+SUPABASE_ANON_KEY=your_supabase_anon_key_here
+OPENAI_API_KEY=your_openai_api_key_here
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Start the application:
 
-## Learn More
+```shell
+docker-compose up
+```
 
-To learn more about Next.js, take a look at the following resources:
+    Open your browser and navigate to http://localhost:3000
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Usage
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+**Import a Repository**: Enter a GitHub repository URL to import and analyze.
+**Explore the Codebase**: Navigate through the repository structure and see key files.
+**Ask Questions**: Use the AI chat interface to ask about any aspect of the code.
+**Get Onboarding Guidance**: Receive personalized recommendations on where to start.
 
-## Deploy on Vercel
+Some example questions:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- "How does authentication work in this app?"
+- "What's the overall architecture of this project?"
+- "Explain the component structure of the frontend"
+- "Where should I start if I want to understand the data flow?"
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Development
+
+This project uses Bun for package management and Docker for development:
+
+### Start the development environment
+
+bun run docker:up
+
+### Install a new package
+
+bun add package-name
+
+### Add a shadcn/ui component
+
+bunx shadcn-ui@latest add button
+
+### Stop the development environment
+
+bun run docker:down
