@@ -15,10 +15,11 @@ services:
       - NODE_ENV=development
       - HOSTNAME=0.0.0.0
       - PORT=3000
-      - CHROMA_API_URL=http://chromadb:8000
+      - CHROMA_DB_URL=http://chromadb:8000
       - NEXT_PUBLIC_SUPABASE_URL=https://cequrbhyjgljrocnhcbv.supabase.co
       - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
       - NEXT_PUBLIC_SITE_URL=http://localhost:3000
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
     networks:
       - app_network
     extra_hosts:
@@ -40,6 +41,7 @@ services:
     environment:
       - ALLOW_RESET=true
       - ANONYMIZED_TELEMETRY=false
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
     networks:
       - app_network
 
