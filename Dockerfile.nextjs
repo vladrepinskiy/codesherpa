@@ -1,7 +1,7 @@
 FROM node:20-alpine AS base
 
 # Install necessary tools
-RUN apk add --no-cache wget bash
+RUN apk add --no-cache wget bash git openssh-client
 
 WORKDIR /app
 
