@@ -1,18 +1,34 @@
-FROM oven/bun:latest as base
+FROM node:20-alpine AS base
+
+# Install necessary tools
+RUN apk add --no-cache wget bash git openssh-client
 
 WORKDIR /app
 
 # Copy package files
-COPY package.json bun.lockb ./
+COPY package.json package-lock.json* yarn.lock* ./
+
+# Convert Bun lockfile to package-lock.json if needed
+RUN if [ ! -f package-lock.json ] && [ ! -f yarn.lock ]; then \
+    echo '{"name":"temp","dependencies":{}}' > package-lock.json; \
+    fi
 
 # Install dependencies
-RUN bun install --frozen-lockfile
+RUN if [ -f yarn.lock ]; then \
+    yarn install --frozen-lockfile; \
+    elif [ -f package-lock.json ]; then \
+    npm ci; \
+    else \
+    npm install; \
+    fi
 
-# Copy the rest of the application
-COPY . .
+# Set environment variables
+ENV NODE_ENV=development
+ENV HOSTNAME=0.0.0.0
+ENV PORT=3000
 
-# Build the application
-RUN bun run build
+# Expose port
+EXPOSE 3000
 
-# Start the application in development mode
-CMD ["bun", "run", "dev"]
+# Start Next.js in development mode
+CMD ["npm", "run", "dev", "--", "--hostname", "0.0.0.0"]

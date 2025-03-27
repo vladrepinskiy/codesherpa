@@ -1,0 +1,8 @@
+node_modules
+.git
+.github
+.next
+docker-volumes
+out
+.env*
+!.env.example

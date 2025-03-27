@@ -1,7 +1,6 @@
 version: "3"
 
 services:
-  # Next.js application with Bun
   nextapp:
     build:
       context: .
@@ -13,15 +12,25 @@ services:
       - /app/node_modules
       - /app/.next
     environment:
+      - NODE_ENV=development
+      - HOSTNAME=0.0.0.0
+      - PORT=3000
       - CHROMA_API_URL=http://chromadb:8000
-      - NEXT_PUBLIC_SUPABASE_URL=${SUPABASE_URL:-http://your-supabase-url}
-      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY:-your-supabase-anon-key}
+      - NEXT_PUBLIC_SUPABASE_URL=https://cequrbhyjgljrocnhcbv.supabase.co
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      - NEXT_PUBLIC_SITE_URL=http://localhost:3000
+    networks:
+      - app_network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/health-check"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     depends_on:
       - chromadb
-    # Enable hot reloading support in Docker
-    command: bun run dev
 
-  # ChromaDB service
   chromadb:
     image: ghcr.io/chroma-core/chroma:latest
     volumes:
@@ -31,7 +40,9 @@ services:
     environment:
       - ALLOW_RESET=true
       - ANONYMIZED_TELEMETRY=false
+    networks:
+      - app_network
 
-volumes:
-  chroma_data:
-    driver: local
+networks:
+  app_network:
+    driver: bridge

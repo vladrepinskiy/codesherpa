@@ -69,20 +69,32 @@ Some example questions:
 
 ## Development
 
-This project uses Bun for package management and Docker for development:
+This project uses Node.js/npm for package management and Docker for development:
 
 ### Start the development environment
 
-bun run docker:up
+```bash
+npm run docker:up
+```
 
 ### Install a new package
 
-bun add package-name
+```bash
+npm install package-name
+```
 
 ### Add a shadcn/ui component
 
-bunx shadcn-ui@latest add button
+```bash
+npx shadcn-ui@latest add button
+```
 
 ### Stop the development environment
 
-bun run docker:down
+```bash
+npm run docker:down
+```
+
+## Important Technical Notes
+
+**Node.js vs Bun**: While this project was originally developed with Bun, I've switched to Node.js due to compatibility issues between Bun and Next.js server actions in Docker environments. When using Bun, server actions would freeze without completing or returning errors, making authentication and other features unusable. Good old Node.js resolves this issue and provides better stability in the Docker environment.
