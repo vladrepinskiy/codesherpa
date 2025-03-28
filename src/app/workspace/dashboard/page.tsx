@@ -28,7 +28,7 @@ export default async function Dashboard() {
           <h1 className='text-3xl font-bold'>CodeSherpa Dashboard</h1>
           <p className='text-gray-600'>Welcome, {user.email}</p>
         </div>
-        <form action={logout} method='post'>
+        <form action={logout}>
           <Button type='submit' variant='outline'>
             Sign Out
           </Button>

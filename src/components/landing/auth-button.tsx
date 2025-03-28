@@ -25,7 +25,7 @@ export default function AuthButton() {
   }, []);
 
   const handleClick = () => {
-    router.push(isLoggedIn ? "/dashboard" : "/auth/login");
+    router.push(isLoggedIn ? "/workspace/dashboard" : "/auth/login");
   };
 
   if (isLoggedIn === null) {

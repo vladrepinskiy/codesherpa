@@ -5,7 +5,7 @@ export default function Home() {
   return (
     <div className='flex flex-col items-center justify-center min-h-screen bg-white text-black p-8'>
       <main className='max-w-4xl w-full flex flex-col items-center text-center'>
-        <h1 className='text-5xl font-bold mb-6'>Welcome to CodeSherpa</h1>
+        <h1 className='text-5xl font-bold mb-6'>Welcome to CodeSherpa 🏔️</h1>
 
         <p className='text-xl mb-10 max-w-2xl'>
           Your intelligent coding companion that guides you through complex
