@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
-import RepositoryImportForm from "@/components/repository/import-form";
+import RepositoryImportForm from "@/app/workspace/dashboard/import-form";
 import { Button } from "@/components/ui/button";
 
 const supabase = createClient();

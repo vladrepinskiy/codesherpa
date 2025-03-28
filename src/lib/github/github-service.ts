@@ -3,30 +3,21 @@ import { createClient } from "@/lib/supabase/server";
 export async function getGitHubAccessToken() {
   try {
     const supabase = await createClient();
-
-    // Get the current session
     const {
       data: { session },
     } = await supabase.auth.getSession();
-
     if (!session) {
       throw new Error("No active session found");
     }
-
-    // For OAuth logins, provider token is in the session
     const providerToken = session.provider_token;
-
     if (!providerToken) {
-      throw new Error(
-        "No GitHub token found - user may not be logged in with GitHub"
-      );
+      console.warn("GitHub token not found or expired - session needs refresh");
+      // Return a specific error - token expired
+      throw new Error("GITHUB_TOKEN_EXPIRED");
     }
-
     console.log("Successfully retrieved GitHub token");
-
-    // Log a preview but return the full token
     console.log(`Token preview: ${providerToken.substring(0, 10)}...`);
-    return providerToken; // Return the FULL token
+    return providerToken;
   } catch (error) {
     console.error("Error getting GitHub token:", error);
     throw error;
