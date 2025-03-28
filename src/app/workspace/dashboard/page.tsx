@@ -1,8 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import RepositoryImportForm from "./import-form";
-import RepositoryGallery from "./repos-gallery";
-import { RepositoryProvider } from "./repos-context";
+import RepositoryImportForm from "./components/import-form";
+import RepositoryGallery from "./components/repos-gallery";
+import { RepositoryProvider } from "../../../contexts/repos-context";
 
 export default async function Dashboard() {
   const supabase = await createClient();

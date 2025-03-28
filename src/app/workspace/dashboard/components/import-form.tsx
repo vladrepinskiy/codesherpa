@@ -14,7 +14,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
-import { useRepositoryContext } from "./repos-context";
+import { useRepositoryContext } from "../../../../contexts/repos-context";
 import { CheckCircle, AlertCircle, ArrowLeft } from "lucide-react";
 
 export default function RepositoryImportForm() {
