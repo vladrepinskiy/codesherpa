@@ -47,3 +47,23 @@ export async function getOrCreateCollection(
     });
   }
 }
+
+/**
+ * Reset the entire ChromaDB instance - WARNING: Deletes all data!
+ */
+export async function resetChromaDB(): Promise<void> {
+  // ChromaDB has a reset API that can be called
+  const path = `${
+    process.env.CHROMA_API_URL || "http://chromadb:8000"
+  }/api/v1/reset`;
+
+  const response = await fetch(path, {
+    method: "POST",
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to reset ChromaDB: ${response.statusText}`);
+  }
+
+  console.log("ChromaDB has been reset");
+}
