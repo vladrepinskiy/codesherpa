@@ -16,7 +16,7 @@ export async function GET(request: Request) {
     await supabase.auth.exchangeCodeForSession(code);
 
     // Always redirect to localhost in development
-    return NextResponse.redirect(new URL("/dashboard", baseUrl));
+    return NextResponse.redirect(new URL("/workspace/dashboard", baseUrl));
   }
 
   return NextResponse.redirect(new URL("/auth/login", baseUrl));
