@@ -9,8 +9,12 @@ import {
   Star,
   FileText,
   GitBranch,
+  MessageCircle,
+  BookOpen,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import SyncStatusCard from "./sync-status-card";
+import RepositoryChat from "./repository-chat";
 
 // Fetch the repository data from Supabase
 async function getRepositoryData(id: string) {
@@ -33,10 +37,28 @@ async function getRepositoryData(id: string) {
     .select("id", { count: "exact", head: true })
     .eq("repository_id", id);
 
+  // Get repository discussions count
+  const { count: discussionsCount } = await supabase
+    .from("repository_discussions")
+    .select("id", { count: "exact", head: true })
+    .eq("repository_id", id);
+
+  // Get unique authors count
+  const { data: discussionsData } = await supabase
+    .from("repository_discussions")
+    .select("author")
+    .eq("repository_id", id);
+
+  const uniqueAuthors = new Set(
+    discussionsData?.map((discussion) => discussion.author)
+  );
+
   return {
     ...repository,
     isFavorite: repository.user_repositories[0]?.is_favorite || false,
     filesCount: filesCount || 0,
+    discussionsCount: discussionsCount || 0,
+    uniqueAuthorsCount: uniqueAuthors?.size || 0,
   };
 }
 
@@ -106,19 +128,7 @@ export default async function RepositoryPage({
           </a>
         </div>
 
-        <div className='grid grid-cols-1 md:grid-cols-3 gap-4 mb-8'>
-          <Card>
-            <CardContent className='pt-6'>
-              <div className='flex items-center'>
-                <Star className='h-5 w-5 mr-2 text-yellow-500' />
-                <div>
-                  <p className='text-2xl font-bold'>{repository.stars_count}</p>
-                  <p className='text-sm text-gray-500'>Stars</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
+        <div className='grid grid-cols-1 md:grid-cols-4 gap-4 mb-8'>
           <Card>
             <CardContent className='pt-6'>
               <div className='flex items-center'>
@@ -134,16 +144,40 @@ export default async function RepositoryPage({
           <Card>
             <CardContent className='pt-6'>
               <div className='flex items-center'>
-                <GitBranch className='h-5 w-5 mr-2 text-green-500' />
+                <MessageCircle className='h-5 w-5 mr-2 text-purple-500' />
                 <div>
                   <p className='text-2xl font-bold'>
-                    {repository.default_branch}
+                    {repository.discussionsCount}
                   </p>
-                  <p className='text-sm text-gray-500'>Default Branch</p>
+                  <p className='text-sm text-gray-500'>
+                    Discussions
+                    <span className='ml-2 text-xs text-gray-400'>
+                      ({repository.uniqueAuthorsCount} authors)
+                    </span>
+                  </p>
                 </div>
               </div>
             </CardContent>
           </Card>
+
+          <Link
+            href={`/workspace/repository/${repository.id}/onboarding`}
+            className='block'
+          >
+            <Card className='h-full transition-all hover:shadow-md'>
+              <CardContent className='pt-6 h-full'>
+                <div className='flex items-center h-full'>
+                  <BookOpen className='h-5 w-5 mr-2 text-amber-500' />
+                  <div>
+                    <p className='text-lg font-medium'>Onboarding Plan</p>
+                    <p className='text-sm text-gray-500'>AI-generated guide</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+
+          <SyncStatusCard />
         </div>
 
         <Card className='mb-8'>
@@ -152,10 +186,26 @@ export default async function RepositoryPage({
           </CardHeader>
           <CardContent>
             <div className='space-y-4'>
-              <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+              <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
                 <div>
                   <h3 className='text-sm font-medium text-gray-500'>Owner</h3>
                   <p>{repository.owner}</p>
+                </div>
+                <div>
+                  <h3 className='text-sm font-medium text-gray-500'>
+                    Default Branch
+                  </h3>
+                  <div className='flex items-center'>
+                    <GitBranch className='h-4 w-4 mr-1 text-green-500' />
+                    <p>{repository.default_branch}</p>
+                  </div>
+                </div>
+                <div>
+                  <h3 className='text-sm font-medium text-gray-500'>Stars</h3>
+                  <div className='flex items-center'>
+                    <Star className='h-4 w-4 mr-1 text-yellow-500' />
+                    <p>{repository.stars_count}</p>
+                  </div>
                 </div>
                 <div>
                   <h3 className='text-sm font-medium text-gray-500'>
@@ -165,7 +215,9 @@ export default async function RepositoryPage({
                     {repository.last_analyzed
                       ? formatDistanceToNow(
                           new Date(repository.last_analyzed),
-                          { addSuffix: true }
+                          {
+                            addSuffix: true,
+                          }
                         )
                       : "Not analyzed yet"}
                   </p>
@@ -193,18 +245,11 @@ export default async function RepositoryPage({
           </CardContent>
         </Card>
 
-        {/* Placeholder for future content - Files Browser */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Repository Files</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className='text-gray-500'>
-              This section will display the repository file browser.
-            </p>
-            {/* You can add a file browser component here in the future */}
-          </CardContent>
-        </Card>
+        {/* Repository Chat Interface */}
+        <RepositoryChat
+          repositoryId={repository.id}
+          repositoryName={repository.name}
+        />
       </div>
     </div>
   );
