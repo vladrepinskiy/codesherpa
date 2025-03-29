@@ -56,8 +56,10 @@ export default async function RepositoryPage({
     redirect("/auth/login");
   }
 
+  const { id: repoId } = await params;
+
   // Get repository data
-  const repository = await getRepositoryData(params.id);
+  const repository = await getRepositoryData(repoId);
 
   if (!repository) {
     redirect("/workspace/dashboard");
@@ -67,7 +69,7 @@ export default async function RepositoryPage({
   await supabase
     .from("repositories")
     .update({ last_accessed: new Date().toISOString() })
-    .eq("id", params.id);
+    .eq("id", repoId);
 
   return (
     <div className='container mx-auto py-10 px-4'>
