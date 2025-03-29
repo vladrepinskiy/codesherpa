@@ -17,8 +17,6 @@ export default async function NotFound() {
     // Fall back to unauthenticated if there's an error
   }
 
-  console.log(isAuthenticated);
-
   return (
     <div className='flex flex-col items-center justify-center min-h-screen bg-white text-black p-8'>
       <main className='max-w-4xl w-full flex flex-col items-center text-center'>

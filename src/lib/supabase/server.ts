@@ -41,8 +41,10 @@ export async function createClient() {
             cookies.forEach(({ name, value, options }) => {
               cookieStore.set(name, value, options);
             });
-          } catch (error) {
-            console.error(error, `Some cookies will be set by middleware`);
+          } catch {
+            // The `setAll` method was called from a Server Component.
+            // This can be ignored if you have middleware refreshing
+            // user sessions.
           }
         },
       },

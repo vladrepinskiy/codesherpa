@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { Settings, User, LogOut } from "lucide-react";
+import { User, LogOut } from "lucide-react";
 import Image from "next/image";
 
 export default async function WorkspaceLayout({
@@ -29,32 +29,8 @@ export default async function WorkspaceLayout({
     redirect("/auth/login");
   }
 
-  // At the beginning of your layout function:
-  console.log("Auth User ID:", user.id);
-  console.log("Auth User Metadata:", user.user_metadata);
-
-  // Then try a more general query to find ANY profiles:
-  const { data: allProfiles, error: profileQueryError } = await supabase
-    .from("profiles")
-    .select("id")
-    .limit(5);
-
-  console.log("Sample profiles in DB:", allProfiles);
-  console.log("Profile query error:", profileQueryError);
-
   // Get user profile to display name and avatar
   const profile = await getUserProfile();
-
-  // Debug: Direct query to profiles table
-  const { data: directProfileQuery } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", user.id)
-    .single();
-
-  console.log("User ID:", user.id);
-  console.log("Profile from getUserProfile():", profile);
-  console.log("Direct profile query:", directProfileQuery);
 
   return (
     <div className='min-h-screen flex flex-col'>
@@ -94,16 +70,6 @@ export default async function WorkspaceLayout({
                   {user.email}
                 </div>
               </div>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link
-                  href='/workspace/settings'
-                  className='flex items-center gap-2 cursor-pointer'
-                >
-                  <Settings size={16} />
-                  <span>Settings</span>
-                </Link>
-              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
                 <form action={logout} className='w-full'>
