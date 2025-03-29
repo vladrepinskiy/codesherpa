@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { logout } from "@/app/auth/actions";
 import { Button } from "@/components/ui/button";
@@ -15,18 +15,24 @@ import {
 } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
 import { useRepositoryContext } from "../../../../contexts/repos-context";
-import { CheckCircle, AlertCircle, ArrowLeft } from "lucide-react";
+import {
+  CheckCircle,
+  AlertCircle,
+  ArrowLeft,
+  AlertTriangle,
+} from "lucide-react";
 
 export default function RepositoryImportForm() {
   const [repoUrl, setRepoUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
   const [importStatus, setImportStatus] = useState<{
     repositoryId: string | null;
     status: string | null;
     currentStage: string | null;
     errorMessage: string | null;
-    timestamp?: number; // Add timestamp for tracking staleness
+    timestamp?: number;
   }>({
     repositoryId: null,
     status: null,
@@ -38,10 +44,41 @@ export default function RepositoryImportForm() {
   const router = useRouter();
   const { triggerRefresh } = useRepositoryContext();
 
+  // Validate GitHub URL as user types
+  useEffect(() => {
+    if (repoUrl) {
+      validateGithubUrl(repoUrl);
+    } else {
+      setValidationError(null);
+    }
+  }, [repoUrl]);
+
+  // GitHub URL validation function
+  const validateGithubUrl = (url: string): boolean => {
+    // GitHub URL regex pattern
+    const githubUrlPattern =
+      /^https?:\/\/(www\.)?github\.com\/[a-zA-Z0-9_-]+\/[a-zA-Z0-9_-]+\/?$/;
+
+    if (!githubUrlPattern.test(url)) {
+      setValidationError(
+        "Please enter a valid GitHub repository URL (e.g., https://github.com/username/repository)"
+      );
+      return false;
+    }
+
+    setValidationError(null);
+    return true;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!repoUrl) return;
+
+    // Validate URL before proceeding
+    if (!validateGithubUrl(repoUrl)) {
+      return;
+    }
 
     setLoading(true);
     setError(null);
@@ -109,6 +146,7 @@ export default function RepositoryImportForm() {
   const resetForm = () => {
     setRepoUrl("");
     setError(null);
+    setValidationError(null);
     setImportStatus({
       repositoryId: null,
       status: null,
@@ -240,17 +278,29 @@ export default function RepositoryImportForm() {
                   onChange={(e) => setRepoUrl(e.target.value)}
                   disabled={loading}
                   required
-                  className='transition-all duration-200 focus:ring-2 focus:ring-offset-1 focus:ring-blue-500'
+                  className={`transition-all duration-200 focus:ring-2 focus:ring-offset-1 focus:ring-blue-500 ${
+                    validationError ? "border-red-500" : ""
+                  }`}
                 />
-                <p className='text-xs text-gray-500'>
-                  Enter the full URL of the GitHub repository you want to import
-                </p>
+                {validationError ? (
+                  <div className='flex items-start gap-2 mt-1 text-red-500 text-xs'>
+                    <AlertTriangle className='h-4 w-4 flex-shrink-0 mt-0.5' />
+                    <span>{validationError}</span>
+                  </div>
+                ) : (
+                  <p className='text-xs text-gray-500'>
+                    Enter the full URL of the GitHub repository you want to
+                    import
+                  </p>
+                )}
               </div>
 
               <Button
                 type='submit'
                 className='w-full flex items-center justify-center transition-all duration-200'
-                disabled={loading || !repoUrl || sessionExpired}
+                disabled={
+                  loading || !repoUrl || sessionExpired || !!validationError
+                }
               >
                 {loading ? (
                   <>
