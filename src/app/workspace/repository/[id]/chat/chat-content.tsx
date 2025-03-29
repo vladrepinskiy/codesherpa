@@ -11,6 +11,8 @@ interface Message {
   role: "user" | "assistant";
   content: string;
   timestamp: Date;
+  id: string;
+  visible: boolean; // Track visibility state for fade-in effect
 }
 
 interface ChatContentProps {
@@ -27,30 +29,65 @@ export default function ChatContent({ params, repository }: ChatContentProps) {
   const [isInitialized, setIsInitialized] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Generate a unique ID for every message
+  const generateId = () => Math.random().toString(36).substring(2, 9);
+
   // Initialize with the query from the URL if available
   useEffect(() => {
     if (initialQuery && !isInitialized) {
       setIsInitialized(true);
       setCurrentInput(initialQuery);
 
-      const userMessage = {
-        role: "user" as const,
+      // Add user message with visible:false initially
+      const userMessageId = generateId();
+      const userMessage: Message = {
+        role: "user",
         content: initialQuery,
         timestamp: new Date(),
+        id: userMessageId,
+        visible: false,
       };
 
       setMessages([userMessage]);
 
-      // Will put an actual api call here
+      // Set visible to true after a brief delay to trigger the transition
       setTimeout(() => {
-        setMessages((prev) => [
-          ...prev,
-          {
-            role: "assistant",
-            content: `I'll help you find information about "${initialQuery}" in the ${repository.name} repository.`,
-            timestamp: new Date(),
-          },
-        ]);
+        setMessages((prev) => {
+          const updatedMessages = [...prev];
+          if (updatedMessages.length > 0) {
+            updatedMessages[0] = { ...updatedMessages[0], visible: true };
+          }
+          return updatedMessages;
+        });
+      }, 10);
+
+      // Simulate an API response
+      setTimeout(() => {
+        const aiMessageId = generateId();
+        const aiMessage: Message = {
+          role: "assistant",
+          content: `I'll help you find information about "${initialQuery}" in the ${repository.name} repository.`,
+          timestamp: new Date(),
+          id: aiMessageId,
+          visible: false,
+        };
+
+        setMessages((prev) => [...prev, aiMessage]);
+
+        // Set visible to true after a brief delay to trigger the transition
+        setTimeout(() => {
+          setMessages((prev) => {
+            const updatedMessages = [...prev];
+            if (updatedMessages.length > 0) {
+              const lastIndex = updatedMessages.length - 1;
+              updatedMessages[lastIndex] = {
+                ...updatedMessages[lastIndex],
+                visible: true,
+              };
+            }
+            return updatedMessages;
+          });
+        }, 10);
       }, 1000);
     }
   }, [initialQuery, repository.name, isInitialized]);
@@ -65,24 +102,62 @@ export default function ChatContent({ params, repository }: ChatContentProps) {
 
     if (!currentInput.trim()) return;
 
+    // Add user message initially with visible:false
+    const userMessageId = generateId();
     const newUserMessage: Message = {
       role: "user",
       content: currentInput,
       timestamp: new Date(),
+      id: userMessageId,
+      visible: false,
     };
 
     setMessages((prev) => [...prev, newUserMessage]);
+
+    // Set visible to true after a brief delay to trigger the transition
+    setTimeout(() => {
+      setMessages((prev) => {
+        const updatedMessages = [...prev];
+        if (updatedMessages.length > 0) {
+          const lastIndex = updatedMessages.length - 1;
+          updatedMessages[lastIndex] = {
+            ...updatedMessages[lastIndex],
+            visible: true,
+          };
+        }
+        return updatedMessages;
+      });
+    }, 10);
+
     setCurrentInput("");
 
-    // Simulate AI response
+    // Simulate AI response (would be replaced with actual API call)
     setTimeout(() => {
+      const aiMessageId = generateId();
       const newAIMessage: Message = {
         role: "assistant",
         content: `Here's what I found about "${newUserMessage.content}" in the ${repository.name} repository.`,
         timestamp: new Date(),
+        id: aiMessageId,
+        visible: false,
       };
 
       setMessages((prev) => [...prev, newAIMessage]);
+
+      // Set visible to true after a brief delay to trigger the transition
+      setTimeout(() => {
+        setMessages((prev) => {
+          const updatedMessages = [...prev];
+          if (updatedMessages.length > 0) {
+            const lastIndex = updatedMessages.length - 1;
+            updatedMessages[lastIndex] = {
+              ...updatedMessages[lastIndex],
+              visible: true,
+            };
+          }
+          return updatedMessages;
+        });
+      }, 10);
     }, 1000);
   };
 
@@ -113,15 +188,17 @@ export default function ChatContent({ params, repository }: ChatContentProps) {
           </div>
         ) : (
           <div className='space-y-4'>
-            {messages.map((message, index) => (
+            {messages.map((message) => (
               <div
-                key={index}
+                key={message.id}
                 className={`flex ${
                   message.role === "assistant" ? "justify-start" : "justify-end"
                 }`}
               >
                 <div
-                  className={`max-w-3/4 rounded-lg p-3 ${
+                  className={`max-w-3/4 rounded-lg p-3 transition-opacity duration-500
+                  ${message.visible ? "opacity-100" : "opacity-0"}
+                  ${
                     message.role === "assistant"
                       ? "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700"
                       : "bg-blue-500 text-white"
