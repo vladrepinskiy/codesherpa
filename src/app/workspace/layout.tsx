@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { Settings, User, LogOut } from "lucide-react";
+import { User, LogOut } from "lucide-react";
 import Image from "next/image";
 
 export default async function WorkspaceLayout({
@@ -70,16 +70,6 @@ export default async function WorkspaceLayout({
                   {user.email}
                 </div>
               </div>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link
-                  href='/workspace/settings'
-                  className='flex items-center gap-2 cursor-pointer'
-                >
-                  <Settings size={16} />
-                  <span>Settings</span>
-                </Link>
-              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
                 <form action={logout} className='w-full'>

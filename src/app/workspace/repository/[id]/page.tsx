@@ -19,12 +19,14 @@ export default async function RepositoryPage({
     redirect("/auth/login");
   }
 
+  const { id: repoId } = await params;
+
   // Update last accessed timestamp
   await supabase
     .from("repositories")
     .update({ last_accessed: new Date().toISOString() })
-    .eq("id", params.id);
+    .eq("id", repoId);
 
   // The component below will be a client component that uses SWR for data fetching
-  return <RepositoryContent id={params.id} />;
+  return <RepositoryContent id={repoId} />;
 }
