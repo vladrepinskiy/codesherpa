@@ -51,7 +51,7 @@ Start the application:
 docker-compose up
 ```
 
-    Open your browser and navigate to http://localhost:3000
+Open your browser and navigate to http://localhost:3000
 
 ### Usage
 
