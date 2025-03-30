@@ -1,7 +1,15 @@
-FROM node:20-alpine AS base
+FROM node:20-slim AS base
 
 # Install necessary tools
-RUN apk add --no-cache wget bash git openssh-client
+RUN apt-get update && apt-get install -y \
+    wget \
+    bash \
+    git \
+    openssh-client \
+    build-essential \
+    python3 \
+    python3-pip \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
