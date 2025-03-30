@@ -87,46 +87,55 @@ export default function RepositoryContent({ id }: { id: string }) {
           </a>
         </div>
 
+        {/* Updated grid with uniform height cards */}
         <div className='grid grid-cols-1 md:grid-cols-4 gap-4 mb-8'>
-          <Card>
-            <CardContent className='pt-6'>
-              <div className='flex items-center'>
-                <FileText className='h-5 w-5 mr-2 text-blue-500' />
-                <div>
-                  <p className='text-2xl font-bold'>{repository.filesCount}</p>
-                  <p className='text-sm text-gray-500'>Files</p>
+          {/* Combined Files and Discussions Stats Card */}
+          <Card className='h-full flex flex-col'>
+            <CardHeader className='pb-2'>
+              <CardTitle className='text-lg'>Statistics</CardTitle>
+            </CardHeader>
+            <CardContent className='flex-grow flex flex-col justify-center'>
+              <div className='space-y-4'>
+                <div className='flex items-center'>
+                  <FileText className='h-5 w-5 mr-3 text-blue-500' />
+                  <div>
+                    <p className='text-2xl font-bold'>
+                      {repository.filesCount}
+                    </p>
+                    <p className='text-sm text-gray-500'>Files</p>
+                  </div>
+                </div>
+
+                <div className='flex items-center'>
+                  <MessageCircle className='h-5 w-5 mr-3 text-purple-500' />
+                  <div>
+                    <p className='text-2xl font-bold'>
+                      {repository.discussionsCount}
+                    </p>
+                    <p className='text-sm text-gray-500'>
+                      Discussions
+                      <span className='ml-2 text-xs text-gray-400'>
+                        ({repository.uniqueAuthorsCount} authors)
+                      </span>
+                    </p>
+                  </div>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardContent className='pt-6'>
-              <div className='flex items-center'>
-                <MessageCircle className='h-5 w-5 mr-2 text-purple-500' />
-                <div>
-                  <p className='text-2xl font-bold'>
-                    {repository.discussionsCount}
-                  </p>
-                  <p className='text-sm text-gray-500'>
-                    Discussions
-                    <span className='ml-2 text-xs text-gray-400'>
-                      ({repository.uniqueAuthorsCount} authors)
-                    </span>
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
+          {/* Onboarding Plan Card */}
           <Link
             href={`/workspace/repository/${repository.id}/onboarding`}
-            className='block'
+            className='block h-full'
           >
-            <Card className='h-full transition-all hover:shadow-md'>
-              <CardContent className='pt-6 h-full'>
-                <div className='flex items-center h-full'>
-                  <BookOpen className='h-5 w-5 mr-2 text-amber-500' />
+            <Card className='h-full transition-all hover:shadow-md flex flex-col'>
+              <CardHeader className='pb-2'>
+                <CardTitle className='text-lg'>Onboarding</CardTitle>
+              </CardHeader>
+              <CardContent className='flex-grow flex items-center'>
+                <div className='flex items-center'>
+                  <BookOpen className='h-5 w-5 mr-3 text-amber-500' />
                   <div>
                     <p className='text-lg font-medium'>Onboarding Plan</p>
                     <p className='text-sm text-gray-500'>AI-generated guide</p>
@@ -136,7 +145,10 @@ export default function RepositoryContent({ id }: { id: string }) {
             </Card>
           </Link>
 
-          <SyncStatusCard />
+          {/* Wide Sync Status Card (spans 2 columns) */}
+          <div className='md:col-span-2 h-full'>
+            <SyncStatusCard />
+          </div>
         </div>
 
         <Card className='mb-8'>

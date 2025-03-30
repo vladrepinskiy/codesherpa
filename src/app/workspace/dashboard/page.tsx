@@ -4,7 +4,7 @@ import RepositoryImportForm from "./components/import-form";
 import RepositoryGallery from "./components/repos-gallery";
 import { RepositoryProvider } from "../../../contexts/repos-context";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Code, Database, GitFork, Search, Sparkles } from "lucide-react";
+import { Code, GitFork, Search, Sparkles } from "lucide-react";
 
 export default async function Dashboard() {
   const supabase = await createClient();
@@ -41,8 +41,9 @@ export default async function Dashboard() {
                   <div>
                     <h3 className='font-medium text-base'>Code Cloning</h3>
                     <p className='text-muted-foreground'>
-                      We securely clone your repository code for analysis while
-                      respecting your privacy settings.
+                      We use your github personal access token to clone your
+                      repository. We also pull a lot of textual information from
+                      the repository - pull requests, issues and discussions.
                     </p>
                   </div>
                 </div>
@@ -54,25 +55,12 @@ export default async function Dashboard() {
                   <div>
                     <h3 className='font-medium text-base'>File Analysis</h3>
                     <p className='text-muted-foreground'>
-                      Each file is analyzed for structure, dependencies, and
-                      code patterns to build a comprehensive understanding.
+                      We run through the repository files, filtering out
+                      irrelevant ones, analyzing and recording metadata about
+                      useful source code files
                     </p>
                   </div>
                 </div>
-
-                <div className='flex gap-3'>
-                  <div className='mt-0.5'>
-                    <Database className='h-5 w-5 text-green-500' />
-                  </div>
-                  <div>
-                    <h3 className='font-medium text-base'>Metadata Storage</h3>
-                    <p className='text-muted-foreground'>
-                      Repository metadata, issues, and pull requests are
-                      cataloged for contextual understanding of your codebase.
-                    </p>
-                  </div>
-                </div>
-
                 <div className='flex gap-3'>
                   <div className='mt-0.5'>
                     <Search className='h-5 w-5 text-amber-500' />
@@ -98,7 +86,7 @@ export default async function Dashboard() {
                       AI-Powered Context
                     </h3>
                     <p className='text-muted-foreground'>
-                      All this information is fed to our LLMs through semantic
+                      All this information is fed to our LLMs using semantic
                       search, providing accurate and relevant responses during
                       chat sessions.
                     </p>

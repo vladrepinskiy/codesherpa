@@ -62,12 +62,34 @@ export async function GET(
     let discussionsChromaCount = 0;
     let codeCollectionExists = false;
     let discussionsCollectionExists = false;
+    let uniqueCodeFilesInChroma = 0;
+    let uniqueDiscussionsInChroma = 0;
 
     try {
       codeCollection = await getOrCreateCollection(codeCollectionId);
       if (codeCollection) {
         codeCollectionExists = true;
         codeChromaCount = await codeCollection.count();
+
+        const queryResult = await codeCollection.get({
+          // @ts-expect-error - "metadatas" is a valid value according to IncludeEnum
+          include: ["metadatas"],
+        });
+
+        // Extract file paths and count unique ones
+        const uniqueFilePaths = new Set<string>();
+        if (queryResult.metadatas && queryResult.metadatas.length > 0) {
+          for (const metadata of queryResult.metadatas) {
+            if (
+              metadata &&
+              "path" in metadata &&
+              typeof metadata.path === "string"
+            ) {
+              uniqueFilePaths.add(metadata.path);
+            }
+          }
+        }
+        uniqueCodeFilesInChroma = uniqueFilePaths.size;
       }
     } catch (error) {
       console.log(`Code collection ${codeCollectionId} not found: ${error}`);
@@ -80,6 +102,26 @@ export async function GET(
       if (discussionsCollection) {
         discussionsCollectionExists = true;
         discussionsChromaCount = await discussionsCollection.count();
+
+        const queryResult = await discussionsCollection.get({
+          // @ts-expect-error - "metadatas" is a valid value according to IncludeEnum
+          include: ["metadatas"],
+        });
+
+        // Extract discussion paths and count unique ones
+        const uniqueDiscussionPaths = new Set<string>();
+        if (queryResult.metadatas && queryResult.metadatas.length > 0) {
+          for (const metadata of queryResult.metadatas) {
+            if (
+              metadata &&
+              "path" in metadata &&
+              typeof metadata.path === "string"
+            ) {
+              uniqueDiscussionPaths.add(metadata.path);
+            }
+          }
+        }
+        uniqueDiscussionsInChroma = uniqueDiscussionPaths.size;
       }
     } catch (error) {
       console.log(
@@ -90,17 +132,20 @@ export async function GET(
     const codeIntegrity = {
       supabaseCount: filesCount || 0,
       chromaCount: codeChromaCount,
+      uniqueChromaCount: uniqueCodeFilesInChroma,
       collectionExists: codeCollectionExists,
-      isIntact: codeCollectionExists && (filesCount || 0) === codeChromaCount,
+      isIntact:
+        codeCollectionExists && (filesCount || 0) === uniqueCodeFilesInChroma,
     };
 
     const discussionsIntegrity = {
       supabaseCount: discussionsCount || 0,
       chromaCount: discussionsChromaCount,
+      uniqueChromaCount: uniqueDiscussionsInChroma,
       collectionExists: discussionsCollectionExists,
       isIntact:
         discussionsCollectionExists &&
-        (discussionsCount || 0) === discussionsChromaCount,
+        (discussionsCount || 0) === uniqueDiscussionsInChroma,
     };
 
     return NextResponse.json({
