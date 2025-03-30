@@ -184,8 +184,6 @@ export default function ChatContent({ params, repository }: ChatContentProps) {
       const data = await response.json();
       const results = data.results;
 
-      console.log(results);
-
       // Replace loading message with actual results
       const aiMessageId = generateId();
 
