@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { Octokit } from "@octokit/rest";
 
 export async function getGitHubAccessToken() {
   try {
@@ -22,4 +23,122 @@ export async function getGitHubAccessToken() {
     console.error("Error getting GitHub token:", error);
     throw error;
   }
+}
+
+/**
+ * Fetch discussions, PRs and issues from GitHub repository
+ */
+export async function fetchRepositoryDiscussions(
+  owner: string,
+  repo: string,
+  accessToken: string
+): Promise<
+  {
+    id: string;
+    title: string;
+    body: string;
+    url: string;
+    author: string;
+    createdAt: string;
+    type: "issue" | "pr" | "discussion";
+    number: number;
+  }[]
+> {
+  const octokit = new Octokit({ auth: accessToken });
+  const discussions = [];
+
+  // Fetch issues
+  const { data: issues } = await octokit.issues.listForRepo({
+    owner,
+    repo,
+    state: "all",
+    per_page: 100,
+  });
+
+  for (const issue of issues) {
+    // Skip PRs (they appear in issues list but we'll get them separately)
+    if (issue.pull_request) continue;
+
+    discussions.push({
+      id: `issue_${issue.id}`,
+      title: issue.title,
+      body: issue.body || "",
+      url: issue.html_url,
+      author: issue.user?.login || "unknown",
+      createdAt: issue.created_at,
+      type: "issue" as const,
+      number: issue.number,
+    });
+  }
+
+  // Fetch PRs
+  const { data: prs } = await octokit.pulls.list({
+    owner,
+    repo,
+    state: "all",
+    per_page: 100,
+  });
+
+  for (const pr of prs) {
+    discussions.push({
+      id: `pr_${pr.id}`,
+      title: pr.title,
+      body: pr.body || "",
+      url: pr.html_url,
+      author: pr.user?.login || "unknown",
+      createdAt: pr.created_at,
+      type: "pr" as const,
+      number: pr.number,
+    });
+  }
+
+  // Fetch discussions if the repo has GitHub Discussions enabled
+  try {
+    // Note: This uses the GraphQL API since REST API doesn't have discussions endpoint
+    const result = await octokit.graphql(
+      `
+      query($owner: String!, $name: String!) {
+        repository(owner: $owner, name: $name) {
+          discussions(first: 100) {
+            nodes {
+              id
+              title
+              body
+              url
+              author {
+                login
+              }
+              createdAt
+              number
+            }
+          }
+        }
+      }
+    `,
+      {
+        owner,
+        name: repo,
+      }
+    );
+
+    // @ts-expect-error - 'result' is of type 'unknown'
+    const repoDiscussions = result.repository.discussions.nodes;
+
+    for (const discussion of repoDiscussions) {
+      discussions.push({
+        id: `discussion_${discussion.id}`,
+        title: discussion.title,
+        body: discussion.body,
+        url: discussion.url,
+        author: discussion.author?.login || "unknown",
+        createdAt: discussion.createdAt,
+        type: "discussion" as const,
+        number: discussion.number,
+      });
+    }
+  } catch (error) {
+    console.log("Repository might not have discussions enabled:", error);
+  }
+
+  return discussions;
 }

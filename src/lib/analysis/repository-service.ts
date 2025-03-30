@@ -9,6 +9,7 @@ import { Repository, FileContent } from "@/types/repository";
 import { createFileMetadata } from "@/types/chromadb";
 import { glob } from "glob";
 import { BATCH_SIZE, CHUNK_SIZE } from "@/config/processing";
+import { fetchRepositoryDiscussions } from "../github/github-service";
 
 // Base directory for storing repositories
 const REPOS_DIR = path.join(process.cwd(), "tmp", "repos");
@@ -147,10 +148,11 @@ export async function processRepositoryFiles(
  */
 export async function storeInChromaDB(
   repositoryId: string,
-  files: FileContent[]
+  files: FileContent[],
+  collectionType: "code" | "discussions" = "code"
 ): Promise<string> {
   // Create collection for this repository
-  const collectionId = `repo_${repositoryId}`;
+  const collectionId = `repo_${repositoryId}_${collectionType}`;
 
   // Get or create the collection using our helper
   const collection = await getOrCreateCollection(collectionId);
@@ -172,7 +174,6 @@ export async function storeInChromaDB(
     };
 
     for (const file of batch) {
-      // For large files, split them into multiple chunks
       if (file.content.length > CHUNK_SIZE) {
         const fileChunks = splitIntoChunks(file.content, CHUNK_SIZE);
 
@@ -363,6 +364,50 @@ export async function importRepository(
           size_bytes: file.size_bytes,
           last_modified: file.last_modified,
           chroma_collection_id: collectionId,
+        });
+      }
+
+      // 7. Fetch and store discussions
+      await updateStage("Fetching repository discussions and PRs");
+      const discussions = await fetchRepositoryDiscussions(
+        metadata.owner as string,
+        metadata.name as string,
+        accessToken
+      );
+
+      await updateStage(
+        `Creating vector embeddings for ${discussions.length} discussions`
+      );
+
+      // Convert discussions to a format compatible with ChromaDB
+      const discussionContents = discussions.map((d) => ({
+        path: `${d.type}/${d.number}`,
+        content: `# ${d.title}\n\n${d.body}\n\nURL: ${d.url}\nAuthor: ${d.author}\nCreated: ${d.createdAt}`,
+        language: "markdown",
+        size_bytes: d.body.length + d.title.length,
+        last_modified: d.createdAt,
+      }));
+
+      // Store discussions in a separate collection
+      const discussionsCollectionId = await storeInChromaDB(
+        repository.id,
+        discussionContents,
+        "discussions"
+      );
+
+      // Store discussion metadata in Supabase
+      await updateStage("Storing discussion metadata");
+      for (const discussion of discussions) {
+        await supabase.from("repository_discussions").insert({
+          repository_id: repository.id,
+          external_id: discussion.id,
+          title: discussion.title,
+          type: discussion.type,
+          number: discussion.number,
+          url: discussion.url,
+          author: discussion.author,
+          created_at: discussion.createdAt,
+          chroma_collection_id: discussionsCollectionId,
         });
       }
 

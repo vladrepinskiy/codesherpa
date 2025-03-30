@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
 import { getChromaClient } from "@/lib/chromadb/chroma-client";
+import { createClient } from "@/lib/supabase/server";
+import { NextResponse } from "next/server";
 
 export async function DELETE(
   request: Request,
@@ -9,7 +9,7 @@ export async function DELETE(
   const supabase = await createClient();
 
   try {
-    const { id: repositoryId } = await params; // Fix: await params
+    const { id: repositoryId } = await params;
 
     // Authenticate user
     const {
@@ -38,27 +38,6 @@ export async function DELETE(
       );
     }
 
-    // Get ChromaDB collection IDs before deletion
-    const { data: repoFiles, error: filesError } = await supabase
-      .from("repository_files")
-      .select("chroma_collection_id")
-      .eq("repository_id", repositoryId)
-      .not("chroma_collection_id", "is", null);
-
-    if (filesError) {
-      console.error("Error fetching repository files:", filesError);
-      // Continue with deletion even if we can't get the ChromaDB collections
-    }
-
-    // Store the unique ChromaDB collection IDs
-    const chromaCollectionIds = repoFiles
-      ? [
-          ...new Set(
-            repoFiles.map((file) => file.chroma_collection_id).filter(Boolean)
-          ),
-        ]
-      : [];
-
     // Delete repository (cascading will take care of user_repositories and repository_files)
     const { error: deleteRepoError } = await supabase
       .from("repositories")
@@ -73,41 +52,43 @@ export async function DELETE(
       );
     }
 
-    // Improve ChromaDB collection deletion with better checks
-    if (chromaCollectionIds.length > 0) {
-      try {
-        const chromaClient = await getChromaClient();
+    // Use standardized collection names instead of querying the database
+    const codeCollectionId = `repo_${repositoryId}_code`;
+    const discussionsCollectionId = `repo_${repositoryId}_discussions`;
+    const collectionIds = [codeCollectionId, discussionsCollectionId];
 
-        // Delete each collection with improved error handling
-        for (const collectionId of chromaCollectionIds) {
-          try {
-            // Check if collection exists before attempting to delete
-            const collections = await chromaClient.listCollections();
-            const collectionExists = collections.some(
-              (c) => c === collectionId
-            );
+    // Delete ChromaDB collections
+    try {
+      const chromaClient = await getChromaClient();
 
-            if (collectionExists) {
-              await chromaClient.deleteCollection({ name: collectionId });
-              console.log(`Deleted ChromaDB collection: ${collectionId}`);
-            } else {
-              console.warn(
-                `ChromaDB collection ${collectionId} referenced in Supabase but not found in ChromaDB`
-              );
-              // You could record this inconsistency for later cleanup
-            }
-          } catch (collectionError) {
-            console.error(
-              `Error with ChromaDB collection ${collectionId}:`,
-              collectionError
+      // Delete each collection with improved error handling
+      for (const collectionId of collectionIds) {
+        try {
+          // Check if collection exists before attempting to delete
+          const collections = await chromaClient.listCollections();
+          const collectionExists = collections.some(
+            (c) => c === collectionId // Note: collections may be objects with a 'name' property
+          );
+
+          if (collectionExists) {
+            await chromaClient.deleteCollection({ name: collectionId });
+            console.log(`Deleted ChromaDB collection: ${collectionId}`);
+          } else {
+            console.log(
+              `ChromaDB collection ${collectionId} not found - skipping deletion`
             );
-            // Continue with other collections even if one fails
           }
+        } catch (collectionError) {
+          console.error(
+            `Error with ChromaDB collection ${collectionId}:`,
+            collectionError
+          );
+          // Continue with other collections even if one fails
         }
-      } catch (chromaError) {
-        console.error("Error connecting to ChromaDB:", chromaError);
-        // Continue even if ChromaDB deletion fails
       }
+    } catch (chromaError) {
+      console.error("Error connecting to ChromaDB:", chromaError);
+      // Continue even if ChromaDB deletion fails
     }
 
     // Return success response
