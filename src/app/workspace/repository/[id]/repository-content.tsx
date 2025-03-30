@@ -13,10 +13,10 @@ import {
   GitBranch,
   MessageCircle,
   BookOpen,
+  MessageCircleQuestion,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import SyncStatusCard from "@/app/workspace/repository/[id]/sync-status-card";
-import RepositoryChat from "@/app/workspace/repository/[id]/repository-chat";
 import { useRepository } from "@/hooks/use-repository";
 
 export default function RepositoryContent({ id }: { id: string }) {
@@ -87,9 +87,85 @@ export default function RepositoryContent({ id }: { id: string }) {
           </a>
         </div>
 
-        {/* Updated grid with uniform height cards */}
-        <div className='grid grid-cols-1 md:grid-cols-4 gap-4 mb-8'>
-          {/* Combined Files and Discussions Stats Card */}
+        {/* First row: Repository Information and Data Synchronization */}
+        <div className='grid grid-cols-1 md:grid-cols-2 gap-4 mb-8'>
+          {/* Repository Information Card */}
+          <Card className='h-full flex flex-col'>
+            <CardHeader className='pb-2'>
+              <CardTitle className='text-lg'>Repository Information</CardTitle>
+            </CardHeader>
+            <CardContent className='flex-grow'>
+              <div className='space-y-4'>
+                <div className='grid grid-cols-2 gap-4'>
+                  <div>
+                    <h3 className='text-sm font-medium text-gray-500'>Owner</h3>
+                    <p>{repository.owner}</p>
+                  </div>
+                  <div>
+                    <h3 className='text-sm font-medium text-gray-500'>
+                      Default Branch
+                    </h3>
+                    <div className='flex items-center'>
+                      <GitBranch className='h-4 w-4 mr-1 text-green-500' />
+                      <p>{repository.default_branch}</p>
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className='text-sm font-medium text-gray-500'>Stars</h3>
+                    <div className='flex items-center'>
+                      <Star className='h-4 w-4 mr-1 text-yellow-500' />
+                      <p>{repository.stars_count}</p>
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className='text-sm font-medium text-gray-500'>
+                      Last Analyzed
+                    </h3>
+                    <p>
+                      {repository.last_analyzed
+                        ? formatDistanceToNow(
+                            new Date(repository.last_analyzed),
+                            {
+                              addSuffix: true,
+                            }
+                          )
+                        : "Not analyzed yet"}
+                    </p>
+                  </div>
+                  <div>
+                    <h3 className='text-sm font-medium text-gray-500'>
+                      Status
+                    </h3>
+                    <p
+                      className={
+                        repository.status === "ready"
+                          ? "text-green-600"
+                          : "text-yellow-600"
+                      }
+                    >
+                      {repository.status === "ready"
+                        ? "Ready"
+                        : repository.status}
+                    </p>
+                  </div>
+                  <div>
+                    <h3 className='text-sm font-medium text-gray-500'>
+                      Privacy
+                    </h3>
+                    <p>{repository.is_private ? "Private" : "Public"}</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Data Synchronization Card */}
+          <SyncStatusCard />
+        </div>
+
+        {/* Second row: Statistics, Onboarding, Chat */}
+        <div className='grid grid-cols-1 md:grid-cols-3 gap-4 mb-8'>
+          {/* Statistics Card */}
           <Card className='h-full flex flex-col'>
             <CardHeader className='pb-2'>
               <CardTitle className='text-lg'>Statistics</CardTitle>
@@ -138,89 +214,40 @@ export default function RepositoryContent({ id }: { id: string }) {
                   <BookOpen className='h-5 w-5 mr-3 text-amber-500' />
                   <div>
                     <p className='text-lg font-medium'>Onboarding Plan</p>
-                    <p className='text-sm text-gray-500'>AI-generated guide</p>
+                    <p className='text-sm text-gray-500'>
+                      Not sure where to start? Have a look at this intelligent
+                      overview of first steps.
+                    </p>
                   </div>
                 </div>
               </CardContent>
             </Card>
           </Link>
 
-          {/* Wide Sync Status Card (spans 2 columns) */}
-          <div className='md:col-span-2 h-full'>
-            <SyncStatusCard />
-          </div>
+          {/* Chat Navigation Card */}
+          <Link
+            href={`/workspace/repository/${repository.id}/chat`}
+            className='block h-full'
+          >
+            <Card className='h-full transition-all hover:shadow-md flex flex-col'>
+              <CardHeader className='pb-2'>
+                <CardTitle className='text-lg'>Repository Chat</CardTitle>
+              </CardHeader>
+              <CardContent className='flex-grow flex items-center'>
+                <div className='flex items-center'>
+                  <MessageCircleQuestion className='min-h-5 min-w-5  mr-3 text-indigo-500' />
+                  <div>
+                    <p className='text-lg font-medium'>Chat Interface</p>
+                    <p className='text-sm text-gray-500'>
+                      Have any open questions about the project? Come and chat
+                      with your AI assistant.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
         </div>
-
-        <Card className='mb-8'>
-          <CardHeader>
-            <CardTitle>Repository Information</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className='space-y-4'>
-              <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
-                <div>
-                  <h3 className='text-sm font-medium text-gray-500'>Owner</h3>
-                  <p>{repository.owner}</p>
-                </div>
-                <div>
-                  <h3 className='text-sm font-medium text-gray-500'>
-                    Default Branch
-                  </h3>
-                  <div className='flex items-center'>
-                    <GitBranch className='h-4 w-4 mr-1 text-green-500' />
-                    <p>{repository.default_branch}</p>
-                  </div>
-                </div>
-                <div>
-                  <h3 className='text-sm font-medium text-gray-500'>Stars</h3>
-                  <div className='flex items-center'>
-                    <Star className='h-4 w-4 mr-1 text-yellow-500' />
-                    <p>{repository.stars_count}</p>
-                  </div>
-                </div>
-                <div>
-                  <h3 className='text-sm font-medium text-gray-500'>
-                    Last Analyzed
-                  </h3>
-                  <p>
-                    {repository.last_analyzed
-                      ? formatDistanceToNow(
-                          new Date(repository.last_analyzed),
-                          {
-                            addSuffix: true,
-                          }
-                        )
-                      : "Not analyzed yet"}
-                  </p>
-                </div>
-                <div>
-                  <h3 className='text-sm font-medium text-gray-500'>Status</h3>
-                  <p
-                    className={
-                      repository.status === "ready"
-                        ? "text-green-600"
-                        : "text-yellow-600"
-                    }
-                  >
-                    {repository.status === "ready"
-                      ? "Ready"
-                      : repository.status}
-                  </p>
-                </div>
-                <div>
-                  <h3 className='text-sm font-medium text-gray-500'>Privacy</h3>
-                  <p>{repository.is_private ? "Private" : "Public"}</p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Repository Chat Interface */}
-        <RepositoryChat
-          repositoryId={repository.id}
-          repositoryName={repository.name}
-        />
       </div>
     </div>
   );
