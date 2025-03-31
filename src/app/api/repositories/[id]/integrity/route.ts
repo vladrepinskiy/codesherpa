@@ -2,20 +2,19 @@ import { NextResponse } from "next/server";
 import { checkRepositoryAccess } from "@/lib/supabase/user-service";
 import { checkRepositoryIntegrity } from "@/lib/data-integrity/data-integrity-service";
 
-// Corrected route handler signature - params should be the second parameter
 export async function GET(
   request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
-    if (!params || !params.id) {
+    const repoId = await params.id;
+
+    if (!repoId) {
       return NextResponse.json(
         { error: "Repository ID is required" },
         { status: 400 }
       );
     }
-
-    const repoId = params.id;
 
     const accessResult = await checkRepositoryAccess(repoId);
     if (accessResult instanceof Response) {
