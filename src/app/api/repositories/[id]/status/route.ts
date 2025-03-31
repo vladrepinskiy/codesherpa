@@ -2,7 +2,10 @@ import { NextResponse } from "next/server";
 import { checkRepositoryAccess } from "@/lib/supabase/user-service";
 import { getRepositoryStatus } from "@/lib/supabase/repos-service";
 
-export async function GET({ params }: { params: { id: string } }) {
+export async function GET(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
   try {
     const { id: repositoryId } = await params;
     const accessResult = await checkRepositoryAccess(repositoryId);

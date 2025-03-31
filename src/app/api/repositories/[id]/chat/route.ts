@@ -11,10 +11,10 @@ export const maxDuration = 30;
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const repositoryId = await params.id;
+    const { id: repositoryId } = await params;
     const { messages } = await request.json();
     const latestUserMessage = messages
       .filter((m: Message) => m.role === "user")
