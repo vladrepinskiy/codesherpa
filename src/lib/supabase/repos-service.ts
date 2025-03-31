@@ -211,3 +211,29 @@ export async function cleanRepositoryFiles(repoId: string) {
   const supabase = await createClient();
   await supabase.from("repository_files").delete().eq("repository_id", repoId);
 }
+
+/**
+ * Gets the number of files in a repository
+ */
+export async function getRepositoryFileCount(repoId: string) {
+  const supabase = await createClient();
+  const { count, error } = await supabase
+    .from("repository_files")
+    .select("*", { count: "exact", head: true })
+    .eq("repository_id", repoId);
+  if (error) throw error;
+  return count;
+}
+
+/**
+ * Gets the number of discussions in a repository
+ */
+export async function getRepositoryDiscussionsCount(repoId: string) {
+  const supabase = await createClient();
+  const { count, error } = await supabase
+    .from("repository_discussions")
+    .select("*", { count: "exact", head: true })
+    .eq("repository_id", repoId);
+  if (error) throw error;
+  return count;
+}
