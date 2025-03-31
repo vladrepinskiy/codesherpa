@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import RepositoryContent from "./repository-content";
+import RepositoryContent from "@/components/repository/repository-content";
 
 export default async function RepositoryPage({
   params,
