@@ -1,17 +1,5 @@
 import { createClient as createServerClient } from "@/lib/supabase/server";
-
-export interface Profile {
-  id: string;
-  github_username?: string;
-  avatar_url?: string;
-  display_name?: string;
-  created_at?: string;
-  updated_at?: string;
-}
-
-export type ProfileUpdate = Partial<
-  Omit<Profile, "id" | "created_at" | "updated_at">
->;
+import { Profile } from "@/types/user";
 
 /**
  * Gets the user profile from the supabase auth service
