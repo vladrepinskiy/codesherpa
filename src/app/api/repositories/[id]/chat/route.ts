@@ -59,7 +59,7 @@ export async function POST(
 
     // Format the context from ChromaDB results
     const contextText = results
-      .map((result: any) => {
+      .map((result) => {
         return `
 ${result.type === "code" ? "FILE" : "DISCUSSION"}: ${result.metadata.path}
 CONTENT: ${result.content}
