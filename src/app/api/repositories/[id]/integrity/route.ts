@@ -2,16 +2,27 @@ import { NextResponse } from "next/server";
 import { checkRepositoryAccess } from "@/lib/supabase/user-service";
 import { checkRepositoryIntegrity } from "@/lib/data-integrity/data-integrity-service";
 
-export async function GET({ params }: { params: { id: string } }) {
+// Corrected route handler signature - params should be the second parameter
+export async function GET(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
   try {
-    const { id: repositoryId } = await params;
+    if (!params || !params.id) {
+      return NextResponse.json(
+        { error: "Repository ID is required" },
+        { status: 400 }
+      );
+    }
 
-    const accessResult = await checkRepositoryAccess(repositoryId);
+    const repoId = params.id;
+
+    const accessResult = await checkRepositoryAccess(repoId);
     if (accessResult instanceof Response) {
       return accessResult;
     }
 
-    const integrityResult = await checkRepositoryIntegrity(repositoryId);
+    const integrityResult = await checkRepositoryIntegrity(repoId);
     return NextResponse.json(integrityResult);
   } catch (error) {
     console.error("Error verifying data integrity:", error);
