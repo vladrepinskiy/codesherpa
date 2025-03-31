@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import useSWR from "swr";
 import { Repository } from "@/types/repository";
 import { toast } from "sonner";
@@ -17,6 +17,9 @@ export function useRepositoriesGallery(
     Record<string, string>
   >({});
 
+  // Use a ref to track which repositories we're currently polling
+  const pollingReposRef = useRef<Set<string>>(new Set());
+
   const { data, error, isLoading, mutate } = useSWR(
     `/api/repositories?limit=${pagination.limit}&offset=${pagination.offset}&orderBy=last_accessed&direction=desc`,
     fetcher,
@@ -29,6 +32,7 @@ export function useRepositoriesGallery(
     }
   }, [refreshTrigger, mutate]);
 
+  // Effect to detect repositories that need processing
   useEffect(() => {
     if (!data?.repositories) return;
 
@@ -50,18 +54,41 @@ export function useRepositoriesGallery(
       ])
     );
 
-    setProcessingRepos(newProcessingRepos);
+    // Deep equality check to avoid unnecessary state updates
+    const currentIds = Object.keys(processingRepos);
+    const newIds = Object.keys(newProcessingRepos);
+
+    const hasChanged =
+      currentIds.length !== newIds.length ||
+      newIds.some(
+        (id) =>
+          !currentIds.includes(id) ||
+          newProcessingRepos[id] !== processingRepos[id]
+      );
+
+    if (hasChanged) {
+      setProcessingRepos(newProcessingRepos);
+    }
+
+    // Update which repos we should be polling
+    pollingReposRef.current = new Set(newIds);
+  }, [data, processingRepos]);
+
+  // Separate effect for polling to avoid the infinite loop
+  useEffect(() => {
+    // If no repos to poll, don't set up polling
+    if (pollingReposRef.current.size === 0) return;
 
     // Setup polling
     const intervalId = setInterval(pollRepositories, 5000);
     return () => clearInterval(intervalId);
 
     async function pollRepositories() {
-      const updatedProcessingRepos = { ...newProcessingRepos };
-      let shouldContinuePolling = false;
+      const repoIdsToCheck = Array.from(pollingReposRef.current);
+      const updatedProcessingRepos = { ...processingRepos };
       let hasChanges = false;
 
-      for (const repoId of Object.keys(updatedProcessingRepos)) {
+      for (const repoId of repoIdsToCheck) {
         try {
           const response = await fetch(`/api/repositories/${repoId}/status`);
           const statusData = await response.json();
@@ -70,6 +97,7 @@ export function useRepositoriesGallery(
 
           if (statusData.status === "ready" || statusData.status === "error") {
             delete updatedProcessingRepos[repoId];
+            pollingReposRef.current.delete(repoId);
             hasChanges = true;
 
             // Show notification
@@ -85,11 +113,9 @@ export function useRepositoriesGallery(
               updatedProcessingRepos[repoId] = newStage;
               hasChanges = true;
             }
-            shouldContinuePolling = true;
           }
         } catch (error) {
           console.error(`Error polling repository ${repoId}:`, error);
-          shouldContinuePolling = true;
         }
       }
 
@@ -97,12 +123,13 @@ export function useRepositoriesGallery(
         setProcessingRepos(updatedProcessingRepos);
       }
 
-      if (!shouldContinuePolling) {
+      // If there are no more repos to poll, clear the interval
+      if (pollingReposRef.current.size === 0) {
         clearInterval(intervalId);
         mutate();
       }
     }
-  }, [data, mutate, processingRepos]);
+  }, [processingRepos, mutate]);
 
   async function deleteRepository(repositoryId: string) {
     try {
