@@ -53,8 +53,6 @@ export default function ChatContent({ params, repository }: ChatContentProps) {
           </div>
         ) : (
           <div className='space-y-6'>
-            {" "}
-            {/* Increased space between messages */}
             {messages.map((message) => (
               <ChatMessage key={message.id} message={message} />
             ))}

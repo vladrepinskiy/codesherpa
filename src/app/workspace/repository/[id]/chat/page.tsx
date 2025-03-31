@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import ChatContent from "./chat-content";
+import ChatContent from "@/components/chat/chat-content";
 
 export default async function RepositoryChatPage({
   params,
