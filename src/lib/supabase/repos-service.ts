@@ -191,7 +191,21 @@ export async function updateStatus(
 }
 
 /**
- * Cleans all files associated with the repository in supabase2
+ * Gets the status of a repository
+ */
+export async function getRepositoryStatus(repositoryId: string) {
+  const supabase = await createClient();
+  const { data: repository, error } = await supabase
+    .from("repositories")
+    .select("id, status, error_message, last_analyzed, current_stage")
+    .eq("id", repositoryId)
+    .single();
+  if (error) throw error;
+  return repository;
+}
+
+/**
+ * Cleans all files associated with the repository in supabase
  */
 export async function cleanRepositoryFiles(repoId: string) {
   const supabase = await createClient();
