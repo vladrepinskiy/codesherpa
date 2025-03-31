@@ -30,7 +30,6 @@ export default function RepositoryGallery() {
     deleteRepository,
   } = useRepositoriesGallery(refreshTrigger, pagination);
 
-  // Handle pagination
   const handleLoadMore = () => {
     setPagination((prev) => ({
       ...prev,
@@ -38,7 +37,6 @@ export default function RepositoryGallery() {
     }));
   };
 
-  // Handle repository view
   if (isLoading) {
     return (
       <div className='mb-8'>

@@ -17,25 +17,21 @@ export function useRepositoriesGallery(
     Record<string, string>
   >({});
 
-  // SWR hook for fetching repositories
   const { data, error, isLoading, mutate } = useSWR(
     `/api/repositories?limit=${pagination.limit}&offset=${pagination.offset}&orderBy=last_accessed&direction=desc`,
     fetcher,
     { revalidateOnFocus: false }
   );
 
-  // Effect to trigger refresh when refreshTrigger changes
   useEffect(() => {
     if (refreshTrigger > 0) {
       mutate();
     }
   }, [refreshTrigger, mutate]);
 
-  // Effect to detect and poll for repositories in progress
   useEffect(() => {
     if (!data?.repositories) return;
 
-    // Find repositories that are still processing
     const inProgress = data.repositories.filter(
       (repo: Repository) => repo.status !== "ready" && repo.status !== "error"
     );
@@ -47,7 +43,6 @@ export function useRepositoriesGallery(
       return;
     }
 
-    // Set up processing repos tracking
     const newProcessingRepos = Object.fromEntries(
       inProgress.map((repo: Repository) => [
         repo.id,
