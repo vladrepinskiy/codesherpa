@@ -1,10 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import RepositoryImportForm from "./components/import-form";
-import RepositoryGallery from "./components/repos-gallery";
-import { RepositoryProvider } from "../../../contexts/repos-context";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Code, GitFork, Search, Sparkles } from "lucide-react";
+import { RepositoryProvider } from "@/contexts/repos-context";
+import RepositoryImportForm from "@/components/dashboard/import-form";
+import RepositoryGallery from "@/components/dashboard/repos-gallery";
 
 export default async function Dashboard() {
   const supabase = await createClient();

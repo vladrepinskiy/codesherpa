@@ -5,7 +5,7 @@ import useSWR from "swr";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Repository } from "@/types/repository";
-import { useRepositoryContext } from "../../../../contexts/repos-context";
+import { useRepositoryContext } from "../../contexts/repos-context";
 import { toast } from "sonner";
 import { RepositoryCard } from "./repo-card";
 
