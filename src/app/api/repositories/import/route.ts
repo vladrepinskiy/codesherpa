@@ -33,6 +33,7 @@ export async function POST(request: Request) {
 
     const { repoUrl } = await request.json();
 
+    // TODO: enable zod validation for my routes to generate an OpenAPI spec
     if (!repoUrl || !repoUrl.includes("github.com")) {
       return NextResponse.json(
         { error: "Invalid GitHub repository URL" },
