@@ -1,17 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
-import { Repository } from "@/types/repository";
+import { EnrichedRepository, Repository } from "@/types/repository";
 
 export type RepositoryQueryParams = {
   limit?: number;
   offset?: number;
   orderBy?: string;
   orderDirection?: "asc" | "desc";
-};
-
-export type EnrichedRepository = Repository & {
-  isFavorite: boolean;
-  lastAccessed: string;
-  notes?: string;
 };
 
 /**

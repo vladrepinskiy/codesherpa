@@ -12,17 +12,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
-import { Repository } from "@/types/repository";
+import { EnrichedRepository } from "@/types/repository";
 import { Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
 interface RepositoryCardProps {
-  repository: Repository & {
-    isFavorite?: boolean;
-    lastAccessed?: string | null;
-    notes?: string | null;
-  };
+  repository: EnrichedRepository;
   onDelete: (id: string) => Promise<void>;
   isProcessing: boolean;
   processingStage?: string;
