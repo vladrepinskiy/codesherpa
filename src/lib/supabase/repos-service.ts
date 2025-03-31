@@ -237,3 +237,17 @@ export async function getRepositoryDiscussionsCount(repoId: string) {
   if (error) throw error;
   return count;
 }
+
+/**
+ * Gets the name of a repository by id
+ */
+export async function getRepoName(repoId: string) {
+  const supabase = await createClient();
+  const { data: repository, error } = await supabase
+    .from("repositories")
+    .select("name")
+    .eq("id", repoId)
+    .single();
+  if (error) throw error;
+  return repository?.name;
+}

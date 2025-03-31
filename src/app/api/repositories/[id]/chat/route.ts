@@ -4,7 +4,7 @@ import {
   formatChromaResults,
   queryRepository,
 } from "@/lib/chromadb/chroma-client";
-import { getSystemMessage } from "@/lib/ai/prompt-service";
+import { getSystemMessage } from "@/lib/analysis/prompt-service";
 import { checkRepositoryAccess } from "@/lib/supabase/user-service";
 
 export const maxDuration = 30;
