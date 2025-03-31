@@ -3,16 +3,15 @@
 import { Bot, User } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import rehypeHighlight from "rehype-highlight";
-import "highlight.js/styles/github.css"; // Your chosen theme
+import "highlight.js/styles/github.css";
 
 interface ChatMessageProps {
   message: {
     id: string;
-    role: "user" | "assistant";
+    role: "user" | "assistant" | "system" | "data";
     content: string;
   };
 }
-
 export function ChatMessage({ message }: ChatMessageProps) {
   return (
     <div

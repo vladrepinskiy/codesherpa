@@ -65,5 +65,6 @@ ${contextText}
 
 Analyze the repository context carefully to provide accurate and helpful information.
 Format your response in Markdown with clear sections and bullet points where appropriate.
+Use URLs in the provided context to point to concrete issues, PRs or discussions.
 If the context doesn't provide enough information for certain aspects, acknowledge this limitation.`;
 }

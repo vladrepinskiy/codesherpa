@@ -28,9 +28,12 @@ export async function POST(
 
     const results = await queryRepository(repositoryId, query);
     const contextText = formatChromaResults(results);
-    const systemMessage = getSystemMessage(contextText);
+    const systemMessageContent = getSystemMessage(contextText);
+    const systemMessage = {
+      role: "system",
+      content: systemMessageContent,
+    };
     const messagesWithSystem = [systemMessage, ...messages];
-
     const result = streamText({
       model: openai("gpt-4o-mini"),
       messages: messagesWithSystem,
