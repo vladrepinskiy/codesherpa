@@ -87,6 +87,7 @@ export function useRepositoriesGallery(
       const repoIdsToCheck = Array.from(pollingReposRef.current);
       const updatedProcessingRepos = { ...processingRepos };
       let hasChanges = false;
+      let shouldRefreshData = false;
 
       for (const repoId of repoIdsToCheck) {
         try {
@@ -99,6 +100,7 @@ export function useRepositoriesGallery(
             delete updatedProcessingRepos[repoId];
             pollingReposRef.current.delete(repoId);
             hasChanges = true;
+            shouldRefreshData = true;
 
             // Show notification
             if (statusData.status === "ready") {
@@ -112,6 +114,7 @@ export function useRepositoriesGallery(
             if (updatedProcessingRepos[repoId] !== newStage) {
               updatedProcessingRepos[repoId] = newStage;
               hasChanges = true;
+              shouldRefreshData = true;
             }
           }
         } catch (error) {
@@ -120,6 +123,9 @@ export function useRepositoriesGallery(
       }
 
       if (hasChanges) {
+        if (shouldRefreshData) {
+          mutate();
+        }
         setProcessingRepos(updatedProcessingRepos);
       }
 
