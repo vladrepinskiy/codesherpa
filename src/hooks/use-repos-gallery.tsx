@@ -107,7 +107,7 @@ export function useRepositoriesGallery(
         mutate();
       }
     }
-  }, [data, mutate]);
+  }, [data, mutate, processingRepos]);
 
   async function deleteRepository(repositoryId: string) {
     try {
