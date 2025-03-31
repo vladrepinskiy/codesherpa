@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { Repository } from "@/types/repository";
 import { Octokit } from "@octokit/rest";
 
 export async function getGitHubAccessToken() {
@@ -23,6 +24,35 @@ export async function getGitHubAccessToken() {
     console.error("Error getting GitHub token:", error);
     throw error;
   }
+}
+
+/**
+ * Extract GitHub repository metadata using Octokit
+ */
+export async function getRepositoryMetadata(
+  repoUrl: string,
+  accessToken: string
+): Promise<Partial<Repository>> {
+  const octokit = new Octokit({ auth: accessToken });
+
+  // Parse the owner and repo from URL
+  // Format: https://github.com/owner/repo
+  const urlParts = new URL(repoUrl).pathname.split("/").filter(Boolean);
+  const owner = urlParts[0];
+  const repo = urlParts[1];
+
+  const { data } = await octokit.repos.get({ owner, repo });
+
+  return {
+    github_id: data.id,
+    owner: data.owner.login,
+    name: data.name,
+    full_name: data.full_name,
+    description: data.description,
+    default_branch: data.default_branch,
+    is_private: data.private,
+    stars_count: data.stargazers_count,
+  };
 }
 
 /**
