@@ -1,21 +1,9 @@
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
 import { RepositoryProvider } from "@/contexts/repos-context";
 import RepositoryImportForm from "@/components/dashboard/import-form";
 import RepositoryGallery from "@/components/dashboard/repos-gallery";
 import InfoPanel from "@/components/dashboard/info-panel";
 
 export default async function Dashboard() {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/auth/login");
-  }
-
   return (
     <div className='container mx-auto py-10 px-4'>
       <RepositoryProvider>

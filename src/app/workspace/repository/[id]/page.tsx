@@ -1,23 +1,12 @@
-import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import RepositoryContent from "./repository-content";
 
-// We'll still need a server component to handle authentication
 export default async function RepositoryPage({
   params,
 }: {
   params: { id: string };
 }) {
   const supabase = await createClient();
-
-  // Check authentication
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/auth/login");
-  }
 
   const { id: repoId } = await params;
 

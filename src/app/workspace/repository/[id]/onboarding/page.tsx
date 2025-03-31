@@ -9,18 +9,8 @@ export default async function OnboardingPage({
 }) {
   const supabase = await createClient();
 
-  // Check authentication
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/auth/login");
-  }
-
   const { id: repoId } = await params;
 
-  // Get basic repository info
   const { data: repository } = await supabase
     .from("repositories")
     .select("name, full_name")

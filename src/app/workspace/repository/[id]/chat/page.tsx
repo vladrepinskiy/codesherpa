@@ -9,15 +9,6 @@ export default async function RepositoryChatPage({
 }) {
   const supabase = await createClient();
 
-  // Check authentication
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/auth/login");
-  }
-
   const { id: repoId } = await params;
 
   // Get basic repository info
