@@ -7,7 +7,7 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const { id: repositoryId } = params;
+    const { id: repositoryId } = await params;
 
     const accessResult = await checkRepositoryAccess(repositoryId);
     if (accessResult instanceof Response) {
