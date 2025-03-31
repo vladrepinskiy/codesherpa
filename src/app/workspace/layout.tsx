@@ -18,7 +18,6 @@ export default async function WorkspaceLayout({
     redirect("/auth/login");
   }
 
-  // Get user profile to display name and avatar
   const profile = await getUserProfile();
 
   return (
