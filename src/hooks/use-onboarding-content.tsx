@@ -12,7 +12,6 @@ export function useOnboardingContent(repositoryId: string) {
     contribute: false,
   });
 
-  // Initial load - fetch any existing content from Supabase
   useEffect(() => {
     async function fetchStoredContent() {
       try {
@@ -40,18 +39,12 @@ export function useOnboardingContent(repositoryId: string) {
     fetchStoredContent();
   }, [repositoryId]);
 
-  // Function to generate content for a specific tab
   const generateContent = async (tab: string) => {
-    // Skip if already loading
-    if (isLoading[tab]) return;
-
-    // Skip if we already have content for this tab
-    if (content[tab]) return;
+    if (isLoading[tab] || content[tab]) return;
 
     setIsLoading((prev) => ({ ...prev, [tab]: true }));
 
     try {
-      // First check Supabase again (in case another session generated it)
       const { data } = await supabase
         .from("onboarding_content")
         .select("content")
@@ -60,10 +53,8 @@ export function useOnboardingContent(repositoryId: string) {
         .single();
 
       if (data?.content) {
-        // Content exists in the database
         setContent((prev) => ({ ...prev, [tab]: data.content }));
       } else {
-        // Call API to generate content
         const response = await fetch(
           `/api/repositories/${repositoryId}/onboarding`,
           {
@@ -72,13 +63,9 @@ export function useOnboardingContent(repositoryId: string) {
             body: JSON.stringify({ tab }),
           }
         );
-
         const data = await response.json();
-
-        // Update state with new content
         setContent((prev) => ({ ...prev, [tab]: data.content }));
 
-        // Store in database
         await supabase.from("onboarding_content").upsert(
           {
             repository_id: repositoryId,
