@@ -99,14 +99,13 @@ export async function cloneRepository(repoUrl: string, accessToken?: string) {
 /**
  * Cleans up a repository directory
  */
-export async function cleanupRepository(repoId: string) {
-  const repoDir = path.join(REPOS_DIR, repoId);
+export async function cleanupRepository(repoPath: string) {
   try {
-    await fs.rm(repoDir, { recursive: true, force: true });
-    console.log(`Repository ${repoId} cleaned up successfully`);
+    await fs.rm(repoPath, { recursive: true, force: true });
+    console.log(`Repository at ${repoPath} cleaned up successfully`);
     return true;
   } catch (error) {
-    console.error(`Error cleaning up repository ${repoId}:`, error);
+    console.error(`Error cleaning up repository at ${repoPath}:`, error);
     return false;
   }
 }
@@ -199,7 +198,7 @@ export async function importRepository(
         });
       }
       await updateStage("Completing analysis", repository.id);
-      const updatedRepo = await updateStatus("complete", repository.id);
+      const updatedRepo = await updateStatus("ready", repository.id);
       return updatedRepo;
     } catch (error) {
       await updateStatus("error", repository.id);
