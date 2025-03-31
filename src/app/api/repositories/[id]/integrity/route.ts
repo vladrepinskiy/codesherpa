@@ -1,11 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { checkRepositoryAccess } from "@/lib/supabase/user-service";
 import { checkRepositoryIntegrity } from "@/lib/data-integrity/data-integrity-service";
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET({ params }: { params: { id: string } }) {
   try {
     const { id: repositoryId } = await params;
 
