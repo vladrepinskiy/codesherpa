@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { Repository } from "@/types/repository";
 
-// Define types for query parameters
 export type RepositoryQueryParams = {
   limit?: number;
   offset?: number;
@@ -9,7 +8,6 @@ export type RepositoryQueryParams = {
   orderDirection?: "asc" | "desc";
 };
 
-// Define type for enriched repository
 export type EnrichedRepository = Repository & {
   isFavorite: boolean;
   lastAccessed: string;
@@ -26,7 +24,6 @@ export async function getUserRepositories(
   try {
     const supabase = await createClient();
 
-    // Set default values
     const limit = params.limit || 20;
     const offset = params.offset || 0;
     const orderBy = params.orderBy || "last_accessed";
@@ -47,7 +44,7 @@ export async function getUserRepositories(
       return { repositories: [], error };
     }
 
-    // Enrich repositories with user-specific metadata
+    // Get the "enriched" format expected by the frontend
     const repositories = userRepositories.map((userRepo) => {
       const repo = userRepo.repository as Repository;
       return {
