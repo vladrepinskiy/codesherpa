@@ -86,3 +86,17 @@ export async function checkRepositoryAccess(
     );
   }
 }
+
+export async function addUserRepository(userId: string, repoId: string) {
+  try {
+    const supabase = await createServerClient();
+    await supabase.from("user_repositories").insert({
+      user_id: userId,
+      repository_id: repoId,
+      is_favorite: false,
+    });
+  } catch (error) {
+    console.error("Error adding user repository:", error);
+    throw error;
+  }
+}

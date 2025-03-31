@@ -130,3 +130,70 @@ export async function getPaginatedUserRepositories(
     };
   }
 }
+
+/**
+ * Creates a new repository in supabase with status "importing"
+ */
+export async function createRepository(
+  metadata: Partial<Repository>
+): Promise<{ repository: Repository | null }> {
+  try {
+    const supabase = await createClient();
+    const { data: newRepository, error: repoError } = await supabase
+      .from("repositories")
+      .insert({
+        ...metadata,
+        status: "importing",
+        last_analyzed: null,
+        error_message: null,
+        current_stage: "Initializing repository",
+      })
+      .select()
+      .single();
+    if (repoError)
+      throw new Error(
+        `Failed to create repository record: ${repoError.message}`
+      );
+    return { repository: newRepository };
+  } catch (error) {
+    console.error("Could not create repository in supabase:", error);
+    throw error;
+  }
+}
+
+// TODO handle errors in supabase helper functions
+
+/**
+ * Updates the current stage of a repository
+ */
+export async function updateStage(stage: string, repoId: string) {
+  const supabase = await createClient();
+  await supabase
+    .from("repositories")
+    .update({ current_stage: stage })
+    .eq("id", repoId);
+}
+
+/**
+ * Updates the status of a repository
+ */
+export async function updateStatus(
+  status: string,
+  repoId: string
+): Promise<Repository> {
+  const supabase = await createClient();
+  const { data: updatedRepo, error } = await supabase
+    .from("repositories")
+    .update({ status: status, last_analyzed: new Date().toISOString() })
+    .eq("id", repoId);
+  if (error) throw error;
+  return updatedRepo!;
+}
+
+/**
+ * Cleans all files associated with the repository in supabase2
+ */
+export async function cleanRepositoryFiles(repoId: string) {
+  const supabase = await createClient();
+  await supabase.from("repository_files").delete().eq("repository_id", repoId);
+}
