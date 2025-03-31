@@ -82,7 +82,7 @@ export default function RepositoryGallery() {
       // Check each processing repository
       for (const repoId of Object.keys(updatedProcessingRepos)) {
         try {
-          const response = await fetch(`/api/repositories/status/${repoId}`);
+          const response = await fetch(`/api/repositories/${repoId}/status`);
           const statusData = await response.json();
 
           if (response.ok) {
