@@ -179,7 +179,9 @@ export async function updateStatus(
   const { data: updatedRepo, error } = await supabase
     .from("repositories")
     .update({ status: status, last_analyzed: new Date().toISOString() })
-    .eq("id", repoId);
+    .eq("id", repoId)
+    .select()
+    .single();
   if (error) throw error;
   return updatedRepo!;
 }
