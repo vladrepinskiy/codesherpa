@@ -3,7 +3,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
-// Define return types for your actions
 type AuthActionResult =
   | { error: string; success?: never }
   | { success: string; error?: never }
@@ -25,7 +24,6 @@ export async function login(formData: FormData): Promise<AuthActionResult> {
     return { error: error.message };
   }
 
-  // If successful, redirect (this won't return)
   redirect("/dashboard");
 }
 
