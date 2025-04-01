@@ -50,7 +50,7 @@ CHROMA_RESULTS_NUMBER=5
 Start the application:
 
 ```shell
-docker-compose up
+docker-compose up --build
 ```
 
 Open your browser and navigate to http://localhost:3000
