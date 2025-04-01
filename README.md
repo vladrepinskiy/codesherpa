@@ -43,6 +43,8 @@ Create a .env file using the env.example (run `cp .env.example .env`), and add y
 SUPABASE_URL=your_supabase_url_here
 SUPABASE_ANON_KEY=your_supabase_anon_key_here
 OPENAI_API_KEY=your_openai_api_key_here
+CHROMA_DB_URL=http://chromadb:8000
+CHROMA_RESULTS_NUMBER=5
 ```
 
 Start the application:
