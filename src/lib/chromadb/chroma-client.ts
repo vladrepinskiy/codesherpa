@@ -65,61 +65,133 @@ export async function storeInChromaDB(
   collectionType: "code" | "discussions" = "code"
 ): Promise<string> {
   const collectionId = `repo_${repositoryId}_${collectionType}`;
-  const collection = await getOrCreateCollection(collectionId);
-  console.log(`🔌 Using collection: ${collectionId}`);
-  for (let i = 0; i < files.length; i += BATCH_SIZE) {
-    const batch = files.slice(i, i + BATCH_SIZE);
-    const chunks: {
-      ids: string[];
-      documents: string[];
-      metadatas: Record<string, string | number | boolean>[];
-    } = {
-      ids: [],
-      documents: [],
-      metadatas: [],
-    };
+  console.log(
+    `📊 Starting vector embedding process for ${files.length} files in collection: ${collectionId}`
+  );
 
-    for (const file of batch) {
-      if (file.content.length > CHUNK_SIZE) {
-        const fileChunks = splitIntoChunks(file.content, CHUNK_SIZE);
-        fileChunks.forEach((chunk, index) => {
-          const chunkId = `${repositoryId}_${file.path}_${index}`;
-          chunks.ids.push(chunkId);
-          chunks.documents.push(chunk);
-          chunks.metadatas.push(
-            createFileMetadata(repositoryId, file.path, file.language, {
-              isChunk: true,
-              chunkIndex: index,
-              totalChunks: fileChunks.length,
-            })
+  try {
+    console.log(
+      `🔄 Connecting to ChromaDB and getting collection: ${collectionId}`
+    );
+    const collection = await getOrCreateCollection(collectionId);
+    console.log(`✅ Successfully connected to collection: ${collectionId}`);
+    console.log(`🔌 Using collection: ${collectionId}`);
+
+    let totalProcessedChunks = 0;
+    let totalProcessedFiles = 0;
+
+    for (let i = 0; i < files.length; i += BATCH_SIZE) {
+      const batchNumber = Math.ceil(i / BATCH_SIZE) + 1;
+      const totalBatches = Math.ceil(files.length / BATCH_SIZE);
+      const batch = files.slice(i, i + BATCH_SIZE);
+      console.log(
+        `🔄 Processing batch ${batchNumber}/${totalBatches} with ${batch.length} files`
+      );
+
+      const chunks: {
+        ids: string[];
+        documents: string[];
+        metadatas: Record<string, string | number | boolean>[];
+      } = {
+        ids: [],
+        documents: [],
+        metadatas: [],
+      };
+
+      for (const file of batch) {
+        try {
+          if (file.content.length > CHUNK_SIZE) {
+            const fileChunks = splitIntoChunks(file.content, CHUNK_SIZE);
+            console.log(
+              `📄 File ${file.path} split into ${fileChunks.length} chunks`
+            );
+
+            fileChunks.forEach((chunk, index) => {
+              const chunkId = `${repositoryId}_${file.path}_${index}`;
+              chunks.ids.push(chunkId);
+              chunks.documents.push(chunk);
+              chunks.metadatas.push(
+                createFileMetadata(repositoryId, file.path, file.language, {
+                  isChunk: true,
+                  chunkIndex: index,
+                  totalChunks: fileChunks.length,
+                })
+              );
+            });
+          } else {
+            const fileId = `${repositoryId}_${file.path}`;
+            chunks.ids.push(fileId);
+            chunks.documents.push(file.content);
+            chunks.metadatas.push(
+              createFileMetadata(repositoryId, file.path, file.language)
+            );
+          }
+          totalProcessedFiles++;
+        } catch (error) {
+          console.error(`❌ Error processing file ${file.path}:`, error);
+          // Continue with next file
+        }
+      }
+      if (chunks.ids.length > 0) {
+        try {
+          console.log(
+            `🔄 Adding ${chunks.ids.length} chunks to ChromaDB (batch ${batchNumber}/${totalBatches})`
           );
-        });
-      } else {
-        const fileId = `${repositoryId}_${file.path}`;
-        chunks.ids.push(fileId);
-        chunks.documents.push(file.content);
-        chunks.metadatas.push(
-          createFileMetadata(repositoryId, file.path, file.language)
-        );
+          console.log(
+            `🔍 First chunk ID: ${chunks.ids[0]}, metadata: ${JSON.stringify(
+              chunks.metadatas[0]
+            )}`
+          );
+          // Create a timeout promise that rejects after 60 seconds
+          const timeout = new Promise((_, reject) => {
+            setTimeout(
+              () => reject(new Error("Operation timed out after 60 seconds")),
+              60000
+            );
+          });
+          // Race the add operation against the timeout
+          await Promise.race([
+            collection.add({
+              ids: chunks.ids,
+              documents: chunks.documents,
+              metadatas: chunks.metadatas,
+            }),
+            timeout,
+          ]);
+          totalProcessedChunks += chunks.ids.length;
+          console.log(
+            `✅ Successfully added ${chunks.ids.length} chunks to ChromaDB (total: ${totalProcessedChunks})`
+          );
+        } catch (error) {
+          console.error(`❌ Error adding chunks to ChromaDB:`, error);
+          if (error instanceof Error) {
+            console.error(`Error details: ${error.message}`);
+            console.error(`Error stack: ${error.stack}`);
+          }
+          // Log the ChromaDB collection details (without sensitive info)
+          console.log(`🔍 Collection information: ${collectionId}`);
+          // Don't throw here, continue with next batch
+          console.log(
+            `⚠️ Skipping current batch due to error, continuing with next batch`
+          );
+        }
       }
+    }
+    console.log(
+      `✅ Vector embedding process completed: ${totalProcessedFiles}/${files.length} files processed, ${totalProcessedChunks} total chunks created`
+    );
+    return collectionId;
+  } catch (error) {
+    console.error(`❌ Error in storeInChromaDB:`, error);
+    if (error instanceof Error) {
+      console.error(`Error details: ${error.message}`);
+      console.error(`Error stack: ${error.stack}`);
     }
 
-    if (chunks.ids.length > 0) {
-      try {
-        await collection.add({
-          ids: chunks.ids,
-          documents: chunks.documents,
-          metadatas: chunks.metadatas,
-        });
-        console.log(`🏁 Added ${chunks.ids.length} chunks to ChromaDB`);
-      } catch (error) {
-        console.error(`💥 Error adding chunks to ChromaDB:`, error);
-        throw error;
-      }
-    }
+    // Return the collection ID so processing can continue
+    console.log(`⚠️ Returning collection ID despite errors: ${collectionId}`);
+    return collectionId;
   }
-
-  return collectionId;
 }
 
 /**
