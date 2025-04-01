@@ -33,8 +33,13 @@ let chromaClient: ChromaClient | null = null;
 
 export async function getChromaClient(): Promise<ChromaClient> {
   if (!chromaClient) {
+    console.log("Environment variables available:");
+    console.log("CHROMA_DB_URL:", process.env.CHROMA_DB_URL);
+    console.log("NODE_ENV:", process.env.NODE_ENV);
+    const chromaUrl = process.env.CHROMA_DB_URL || "http://chromadb:8000";
+    console.log(`Attempting to connect to ChromaDB at: ${chromaUrl}`);
     chromaClient = new ChromaClient({
-      path: process.env.CHROMA_DB_URL || "http://chromadb:8000",
+      path: chromaUrl,
     });
   }
   return chromaClient;
