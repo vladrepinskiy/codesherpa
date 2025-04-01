@@ -4,7 +4,39 @@ import { createClient } from "@/lib/supabase/server";
 import { getGitHubAccessToken } from "@/lib/github/github-client";
 import { getErrorMessage } from "@/lib/error-utils";
 
+// Add OPTIONS handler for CORS preflight requests
+export async function OPTIONS(request: Request) {
+  const origin = request.headers.get("origin") || "";
+
+  const allowedOrigins = [
+    "http://localhost:3000",
+    "https://codesherpa.vercel.app/",
+  ];
+
+  const isAllowedOrigin = allowedOrigins.includes(origin);
+
+  return new NextResponse(null, {
+    status: 204, // No content
+    headers: {
+      "Access-Control-Allow-Origin": isAllowedOrigin
+        ? origin
+        : allowedOrigins[0],
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization",
+      "Access-Control-Allow-Credentials": "true",
+      "Access-Control-Max-Age": "86400",
+    },
+  });
+}
+
 export async function POST(request: Request) {
+  const origin = request.headers.get("origin") || "";
+  const allowedOrigins = [
+    "http://localhost:3000",
+    "https://your-vercel-app.vercel.app",
+  ];
+  const isAllowedOrigin = allowedOrigins.includes(origin);
+
   const supabase = await createClient();
 
   try {
@@ -25,7 +57,15 @@ export async function POST(request: Request) {
             message:
               "Your GitHub session has expired. Please log out and log in again.",
           },
-          { status: 401 }
+          {
+            status: 401,
+            headers: {
+              "Access-Control-Allow-Origin": isAllowedOrigin
+                ? origin
+                : allowedOrigins[0],
+              "Access-Control-Allow-Credentials": "true",
+            },
+          }
         );
       }
       throw error;
@@ -33,11 +73,18 @@ export async function POST(request: Request) {
 
     const { repoUrl } = await request.json();
 
-    // TODO: enable zod validation for my routes to generate an OpenAPI spec
     if (!repoUrl || !repoUrl.includes("github.com")) {
       return NextResponse.json(
         { error: "Invalid GitHub repository URL" },
-        { status: 400 }
+        {
+          status: 400,
+          headers: {
+            "Access-Control-Allow-Origin": isAllowedOrigin
+              ? origin
+              : allowedOrigins[0],
+            "Access-Control-Allow-Credentials": "true",
+          },
+        }
       );
     }
 
@@ -49,13 +96,23 @@ export async function POST(request: Request) {
     );
 
     // Return immediately with repository ID
-    return NextResponse.json({
-      success: true,
-      message: "Repository import has been queued",
-      status: repository.status,
-      repositoryId: repository.id,
-      repository: repository,
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        message: "Repository import has been queued",
+        status: repository.status,
+        repositoryId: repository.id,
+        repository: repository,
+      },
+      {
+        headers: {
+          "Access-Control-Allow-Origin": isAllowedOrigin
+            ? origin
+            : allowedOrigins[0],
+          "Access-Control-Allow-Credentials": "true",
+        },
+      }
+    );
   } catch (error) {
     console.error("Repository import failed:", error);
     const errorMessage = getErrorMessage(error);
@@ -64,7 +121,15 @@ export async function POST(request: Request) {
         error: "Failed to import repository",
         details: errorMessage,
       },
-      { status: 500 }
+      {
+        status: 500,
+        headers: {
+          "Access-Control-Allow-Origin": isAllowedOrigin
+            ? origin
+            : allowedOrigins[0],
+          "Access-Control-Allow-Credentials": "true",
+        },
+      }
     );
   }
 }
