@@ -121,12 +121,10 @@ export async function importRepository(
   userId: string
 ): Promise<Repository> {
   const supabase = await createClient();
+  let repository;
   try {
     const metadata = await getRepositoryMetadata(repoUrl, accessToken);
-    const repository = await handleRepositoryCreationInSupabase(
-      userId,
-      metadata
-    );
+    repository = await handleRepositoryCreationInSupabase(userId, metadata);
     if (repository.status === "ready") {
       return repository;
     }
@@ -213,6 +211,11 @@ export async function importRepository(
       await cleanupRepository(repoDir);
     }
   } catch (error) {
+    await updateStatus("error", repository.id);
+    await updateStage(
+      `Error: ${error instanceof Error ? error.message : "Unknown error"}`,
+      repository.id
+    );
     console.error("Repository import failed:", error);
     throw error;
   }
