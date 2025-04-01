@@ -13,7 +13,7 @@ let chromaClient: ChromaClient | null = null;
 export async function getChromaClient(): Promise<ChromaClient> {
   if (!chromaClient) {
     chromaClient = new ChromaClient({
-      path: process.env.CHROMA_API_URL || "http://chromadb:8000",
+      path: process.env.CHROMA_DB_URL || "http://chromadb:8000",
     });
   }
   return chromaClient;
