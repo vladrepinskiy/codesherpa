@@ -83,7 +83,12 @@ export default function RepositoryImportForm() {
     });
 
     try {
-      const response = await fetch("/api/repositories/import", {
+      // Determine API endpoint based on environment
+      const apiUrl =
+        process.env.NEXT_PUBLIC_USE_EXTERNAL_API === "true"
+          ? `${process.env.NEXT_PUBLIC_EXTERNAL_API_URL}/api/repositories/import`
+          : "/api/repositories/import";
+      const response = await fetch(apiUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ repoUrl }),
