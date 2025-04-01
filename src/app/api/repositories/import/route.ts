@@ -33,7 +33,7 @@ export async function POST(request: Request) {
   const origin = request.headers.get("origin") || "";
   const allowedOrigins = [
     "http://localhost:3000",
-    "https://your-vercel-app.vercel.app",
+    "https://codesherpa.vercel.app/",
   ];
   const isAllowedOrigin = allowedOrigins.includes(origin);
 
