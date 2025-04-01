@@ -12,11 +12,12 @@ import path from "path";
 import { mkdirSync } from "fs";
 
 /**
- * Configure ChromaDB cache directory for Vercel deployments -
- * otherwise chromadb-default-embed will use the default cache directory in node_modules.
- * Vercel doesn't allow writing to the default cache directory.
+ * Configure ChromaDB cache directory for serverless deployments -
+ * Vercel and AWS Lambda only allow writing to the /tmp directory.
  */
-if (process.env.VERCEL) {
+export const isServerlessEnv =
+  process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME;
+if (isServerlessEnv) {
   const tmpCacheDir = path.join("/tmp", ".cache", "chromadb");
   try {
     mkdirSync(tmpCacheDir, { recursive: true });
