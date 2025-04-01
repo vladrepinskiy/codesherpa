@@ -1,4 +1,4 @@
-import { openai } from "@ai-sdk/openai";
+import { createOpenAI } from "@ai-sdk/openai";
 import { Message, streamText } from "ai";
 import {
   formatChromaResults,
@@ -34,6 +34,11 @@ export async function POST(
       content: systemMessageContent,
     };
     const messagesWithSystem = [systemMessage, ...messages];
+
+    const openai = createOpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+
     const result = streamText({
       model: openai("gpt-4o-mini"),
       messages: messagesWithSystem,

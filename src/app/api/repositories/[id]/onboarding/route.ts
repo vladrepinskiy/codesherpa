@@ -1,4 +1,4 @@
-import { openai } from "@ai-sdk/openai";
+import { createOpenAI } from "@ai-sdk/openai";
 import { generateText } from "ai";
 import {
   formatChromaResults,
@@ -36,10 +36,12 @@ export async function POST(
     const prompt = getTabPrompt(tab, repoName);
     const systemMessage = getSystemMessage(contextText);
 
-    console.log(process.env.OPENAI_API_KEY);
+    const openai = createOpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
 
     const { text } = await generateText({
-      model: openai("gpt-4o-mini"),
+      model: openai("gpt-4o-mini", {}),
       system: systemMessage,
       prompt: prompt,
     });
