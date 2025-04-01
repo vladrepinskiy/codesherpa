@@ -1,26 +1,42 @@
+"use client";
+
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { createClient } from "@/lib/supabase/server";
+import { useState, useEffect } from "react";
+import { createClient } from "@/lib/supabase/client";
 
-export default async function NotFound() {
-  // Check if user is authenticated
-  let isAuthenticated = false;
+export default function NotFound() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    isAuthenticated = !!user;
-  } catch (error) {
-    console.error("Error checking authentication status:", error);
-    // Fall back to unauthenticated if there's an error
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const supabase = createClient();
+        const { data } = await supabase.auth.getSession();
+        setIsAuthenticated(!!data.session);
+      } catch (error) {
+        console.error("Error checking authentication status:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkAuth();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className='flex flex-col items-center justify-center min-h-screen bg-white text-black p-8'>
+        <p>Loading...</p>
+      </div>
+    );
   }
 
   return (
     <div className='flex flex-col items-center justify-center min-h-screen bg-white text-black p-8'>
       <main className='max-w-4xl w-full flex flex-col items-center text-center'>
-        <h1 className='text-5xl font-bold mb-6'>Page Not Found 🏔️</h1>
+        <h1 className='text-5xl font-bold mb-6'>Page Not Found 🌋</h1>
 
         <p className='text-xl mb-10 max-w-2xl'>
           It seems you&apos;ve wandered off the trail. The page you&apos;re
@@ -28,7 +44,6 @@ export default async function NotFound() {
         </p>
 
         <div className='grid grid-cols-1 md:grid-cols-2 gap-8 mb-10 w-full max-w-2xl'>
-          {/* Dashboard Card - Only show for authenticated users */}
           {isAuthenticated && (
             <div className='border border-gray-200 rounded-lg p-6 flex flex-col items-center h-[200px] justify-between'>
               <div>
@@ -46,7 +61,6 @@ export default async function NotFound() {
             </div>
           )}
 
-          {/* Login Card - Only show for unauthenticated users */}
           {!isAuthenticated && (
             <div className='border border-gray-200 rounded-lg p-6 flex flex-col items-center h-[200px] justify-between'>
               <div>
@@ -62,7 +76,6 @@ export default async function NotFound() {
             </div>
           )}
 
-          {/* Homepage Card - Always show */}
           <div className='border border-gray-200 rounded-lg p-6 flex flex-col items-center h-[200px] justify-between'>
             <div>
               <h3 className='text-lg font-semibold mb-2'>Visit Homepage</h3>

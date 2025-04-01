@@ -76,10 +76,8 @@ export function useRepositoriesGallery(
 
   // Separate effect for polling to avoid the infinite loop
   useEffect(() => {
-    // If no repos to poll, don't set up polling
     if (pollingReposRef.current.size === 0) return;
 
-    // Setup polling
     const intervalId = setInterval(pollRepositories, 5000);
     return () => clearInterval(intervalId);
 

@@ -16,10 +16,10 @@ export const maxDuration = 60;
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const repositoryId = params.id;
+    const { id: repositoryId } = await params;
     const { tab } = await request.json();
 
     const accessResult = await checkRepositoryAccess(repositoryId);

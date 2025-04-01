@@ -4,7 +4,7 @@ import RepositoryContent from "@/components/repository/repository-content";
 export default async function RepositoryPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
   const supabase = await createClient();
 

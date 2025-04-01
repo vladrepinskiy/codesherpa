@@ -4,7 +4,7 @@ import { getRepositoryStatus } from "@/lib/supabase/repos-service";
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id: repositoryId } = await params;

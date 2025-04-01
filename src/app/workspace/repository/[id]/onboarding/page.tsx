@@ -5,7 +5,7 @@ import OnboardingContent from "./onboarding-content";
 export default async function OnboardingPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
   const supabase = await createClient();
 

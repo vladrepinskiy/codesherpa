@@ -36,6 +36,7 @@ export default function OnboardingContent({
     if (!content["overview"] && !isLoading["overview"]) {
       generateContent("overview");
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Render content for a specific tab
@@ -210,11 +211,7 @@ export default function OnboardingContent({
                   repository based on documentation files, README, and other
                   repository content.
                 </p>
-                {renderTabContent(
-                  "overview",
-                  "Project Overview",
-                  "Overview of the repository purpose and goals"
-                )}
+                {renderTabContent("overview")}
               </section>
             </TabsContent>
 
@@ -227,11 +224,7 @@ export default function OnboardingContent({
                   Understanding how the codebase is organized will help you
                   navigate and contribute effectively.
                 </p>
-                {renderTabContent(
-                  "structure",
-                  "Repository Structure",
-                  "Analysis of code organization and architecture"
-                )}
+                {renderTabContent("structure")}
               </section>
             </TabsContent>
 
@@ -242,11 +235,7 @@ export default function OnboardingContent({
                   Follow these instructions to set up your development
                   environment and run the project locally.
                 </p>
-                {renderTabContent(
-                  "setup",
-                  "Setup Instructions",
-                  "How to install and run the project"
-                )}
+                {renderTabContent("setup")}
               </section>
             </TabsContent>
 
@@ -257,11 +246,7 @@ export default function OnboardingContent({
                   Learn how to contribute effectively to this repository and
                   understand the contribution workflow.
                 </p>
-                {renderTabContent(
-                  "contribute",
-                  "Contribution Guide",
-                  "How to contribute to the project"
-                )}
+                {renderTabContent("contribute")}
               </section>
             </TabsContent>
           </CardContent>

@@ -5,7 +5,7 @@ import ChatContent from "@/components/chat/chat-content";
 export default async function RepositoryChatPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
   const supabase = await createClient();
 
