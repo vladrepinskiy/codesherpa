@@ -1,6 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
 import { Repository } from "@/types/repository";
 import { Octokit } from "@octokit/rest";
+import { writeFile } from "fs/promises"; // Import fs/promises properly at the top
+
+// Add this new function to create an Octokit instance with the provided token
+export function getOctokit(accessToken: string): Octokit {
+  return new Octokit({ auth: accessToken });
+}
 
 export async function getGitHubAccessToken() {
   try {
@@ -33,7 +39,7 @@ export async function getRepositoryMetadata(
   repoUrl: string,
   accessToken: string
 ): Promise<Partial<Repository>> {
-  const octokit = new Octokit({ auth: accessToken });
+  const octokit = getOctokit(accessToken);
 
   // Parse the owner and repo from URL
   // Format: https://github.com/owner/repo
@@ -56,6 +62,33 @@ export async function getRepositoryMetadata(
 }
 
 /**
+ * Download GitHub repository as ZIP archive
+ */
+export async function downloadRepositoryZip(
+  owner: string,
+  repo: string,
+  accessToken: string,
+  outputPath: string
+): Promise<void> {
+  const octokit = getOctokit(accessToken);
+
+  try {
+    const response = await octokit.rest.repos.downloadZipballArchive({
+      owner,
+      repo,
+      ref: "HEAD",
+    });
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await writeFile(outputPath, Buffer.from(response.data as any));
+    console.log(`Repository zip downloaded to ${outputPath}`);
+  } catch (error) {
+    console.error("Error downloading repository zip:", error);
+    throw new Error(`Failed to download repository: ${error}`);
+  }
+}
+
+/**
  * Fetch discussions, PRs and issues from GitHub repository
  */
 export async function fetchRepositoryDiscussions(
@@ -74,7 +107,7 @@ export async function fetchRepositoryDiscussions(
     number: number;
   }[]
 > {
-  const octokit = new Octokit({ auth: accessToken });
+  const octokit = getOctokit(accessToken);
   const discussions = [];
 
   // Fetch issues

@@ -1,10 +1,11 @@
 import path from "path";
 import fs from "fs/promises";
 import { v4 as uuidv4 } from "uuid";
-import simpleGit from "simple-git";
+import AdmZip from "adm-zip";
 import { Repository } from "@/types/repository";
 import { createClient } from "../supabase/server";
 import {
+  downloadRepositoryZip,
   fetchRepositoryDiscussions,
   getRepositoryMetadata,
 } from "../github/github-client";
@@ -20,11 +21,6 @@ import {
 } from "../supabase/repos-service";
 import { processRepositoryFiles } from "./file-utils";
 import { storeInChromaDB } from "../chromadb/chroma-client";
-
-// Base directory for storing repositories, adapted to vercel /tmp dir
-const REPOS_DIR = process.env.VERCEL
-  ? path.join("/tmp", "repos")
-  : path.join(process.cwd(), "tmp", "repos");
 
 /**
  * Creates a repository in supabase, or handles the retrieval of the existing one
@@ -67,34 +63,59 @@ async function handleRepositoryCreationInSupabase(
 /**
  * Clones a repository to a local directory
  */
-export async function cloneRepository(repoUrl: string, accessToken?: string) {
+export async function cloneRepository(repoUrl: string, accessToken: string) {
   const repoId = uuidv4();
-  const repoDir = path.join(REPOS_DIR, repoId);
+  const repoDir = process.env.VERCEL
+    ? path.join("/tmp", "repos", repoId)
+    : path.join(process.cwd(), "tmp", "repos", repoId);
+  const zipPath = path.join(repoDir + ".zip");
 
   try {
-    await fs.mkdir(REPOS_DIR, { recursive: true });
+    await fs.mkdir(path.dirname(repoDir), { recursive: true });
 
-    let gitUrl = repoUrl;
-    if (accessToken) {
-      if (!repoUrl.endsWith(".git")) {
-        repoUrl = `${repoUrl}.git`;
-      }
-
-      // Format for GitHub: https://{token}@github.com/username/repo.git
-      const urlParts = repoUrl.split("//");
-      gitUrl = `${urlParts[0]}//${accessToken}@${urlParts[1]}`;
-
-      console.log(`Using authenticated URL (token hidden)`);
+    const urlMatch = repoUrl.match(/github\.com\/([^\/]+)\/([^\/\.]+)/);
+    if (!urlMatch) {
+      throw new Error("Invalid GitHub repository URL");
     }
 
-    const git = simpleGit();
-    await git.clone(gitUrl, repoDir);
+    const [, owner, repo] = urlMatch;
 
-    console.log(`Repository cloned successfully to ${repoDir}`);
+    await downloadRepositoryZip(owner, repo, accessToken, zipPath);
+    await fs.mkdir(repoDir, { recursive: true });
+    const zip = new AdmZip(zipPath);
+    zip.extractAllTo(repoDir, true);
+    console.log(`Repository zip extracted to ${repoDir}`);
+
+    // The extracted content is in a subdirectory, move it up one level
+    const files = await fs.readdir(repoDir);
+    const extractedDir = path.join(repoDir, files[0]);
+
+    // Move all files from subdirectory to the main repo directory
+    const extractedFiles = await fs.readdir(extractedDir);
+    for (const file of extractedFiles) {
+      const sourcePath = path.join(extractedDir, file);
+      const destPath = path.join(repoDir, file);
+
+      const stats = await fs.stat(sourcePath);
+      if (stats.isDirectory()) {
+        // For directories, create destination directory and copy contents
+        await fs.mkdir(destPath, { recursive: true });
+        await fs.cp(sourcePath, destPath, { recursive: true });
+      } else {
+        // For files, just move them
+        await fs.rename(sourcePath, destPath);
+      }
+    }
+
+    await fs.rm(extractedDir, { recursive: true, force: true });
+    await fs.unlink(zipPath);
+    console.log(
+      `Repository downloaded and extracted successfully to ${repoDir}`
+    );
     return { repoId, repoDir };
   } catch (error) {
-    console.error("Error cloning repository:", error);
-    throw new Error(`Failed to clone repository: ${error}`);
+    console.error("Error downloading repository:", error);
+    throw new Error(`Failed to download repository: ${error}`);
   }
 }
 
