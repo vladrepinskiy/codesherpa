@@ -36,6 +36,8 @@ export async function POST(
     const prompt = getTabPrompt(tab, repoName);
     const systemMessage = getSystemMessage(contextText);
 
+    console.log(process.env.OPENAI_API_KEY);
+
     const { text } = await generateText({
       model: openai("gpt-4o-mini"),
       system: systemMessage,
