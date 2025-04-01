@@ -7,6 +7,27 @@ import { FileContent } from "@/types/repository";
 import { ChromaClient, Collection } from "chromadb";
 import { BATCH_SIZE, CHUNK_SIZE } from "@/config/processing";
 import { splitIntoChunks } from "./chunks-utils";
+import { env as chromaEnv } from "chromadb-default-embed";
+import path from "path";
+import { mkdirSync } from "fs";
+
+/**
+ * Configure ChromaDB cache directory for Vercel deployments -
+ * otherwise chromadb-default-embed will use the default cache directory in node_modules.
+ * Vercel doesn't allow writing to the default cache directory.
+ */
+if (process.env.VERCEL) {
+  const tmpCacheDir = path.join("/tmp", ".cache", "chromadb");
+  try {
+    mkdirSync(tmpCacheDir, { recursive: true });
+    console.log(`Created ChromaDB cache directory at ${tmpCacheDir}`);
+    chromaEnv.cacheDir = tmpCacheDir;
+  } catch (error) {
+    console.warn(
+      `Warning: Failed to create ChromaDB cache directory: ${error}`
+    );
+  }
+}
 
 let chromaClient: ChromaClient | null = null;
 
