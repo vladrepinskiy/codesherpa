@@ -21,8 +21,10 @@ import {
 import { processRepositoryFiles } from "./file-utils";
 import { storeInChromaDB } from "../chromadb/chroma-client";
 
-// Base directory for storing repositories
-const REPOS_DIR = path.join(process.cwd(), "tmp", "repos");
+// Base directory for storing repositories, adapted to vercel /tmp dir
+const REPOS_DIR = process.env.VERCEL
+  ? path.join("/tmp", "repos")
+  : path.join(process.cwd(), "tmp", "repos");
 
 /**
  * Creates a repository in supabase, or handles the retrieval of the existing one
