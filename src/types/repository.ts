@@ -1,4 +1,9 @@
-export type RepositoryStatus = "importing" | "analyzing" | "ready" | "error";
+export type RepositoryStatus =
+  | "queued"
+  | "importing"
+  | "analyzing"
+  | "ready"
+  | "error";
 
 export interface Repository {
   id: string;

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { logout } from "@/app/auth/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,7 +40,6 @@ export default function RepositoryImportForm() {
   });
   const [sessionExpired, setSessionExpired] = useState(false);
 
-  const router = useRouter();
   const { triggerRefresh } = useRepositoryContext();
 
   useEffect(() => {
@@ -114,7 +112,7 @@ export default function RepositoryImportForm() {
       setImportStatus({
         repositoryId: data.repositoryId,
         status: "ready",
-        currentStage: "Import complete!",
+        currentStage: "Import Started!",
         errorMessage: null,
       });
       triggerRefresh();
@@ -190,7 +188,7 @@ export default function RepositoryImportForm() {
                 <div className='flex-1'>
                   <p className='font-medium text-lg'>
                     {importStatus.status === "ready"
-                      ? "Import complete!"
+                      ? "You can follow the progress in the gallery below."
                       : importStatus.status === "error"
                       ? "Import failed"
                       : "Importing repository..."}
@@ -209,16 +207,6 @@ export default function RepositoryImportForm() {
               <div className='flex gap-3 mt-6'>
                 {importStatus.status === "ready" && (
                   <>
-                    <Button
-                      onClick={() =>
-                        router.push(
-                          `/workspace/repository/${importStatus.repositoryId}`
-                        )
-                      }
-                      className='flex-1 transition duration-200 hover:translate-y-[-2px]'
-                    >
-                      View Repository
-                    </Button>
                     <Button
                       onClick={resetForm}
                       variant='outline'

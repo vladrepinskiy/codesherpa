@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { importRepository } from "@/lib/import/import-service";
+import { initializeRepositoryImport } from "@/lib/import/import-service";
 import { createClient } from "@/lib/supabase/server";
 import { getGitHubAccessToken } from "@/lib/github/github-client";
 import { getErrorMessage } from "@/lib/error-utils";
@@ -41,11 +41,18 @@ export async function POST(request: Request) {
       );
     }
 
-    const repository = await importRepository(repoUrl, accessToken, user!.id);
+    // Initialize and queue the repository
+    const repository = await initializeRepositoryImport(
+      repoUrl,
+      accessToken,
+      user!.id
+    );
+
+    // Return immediately with repository ID
     return NextResponse.json({
       success: true,
-      message: "Repository import completed successfully",
-      status: "ready",
+      message: "Repository import has been queued",
+      status: repository.status,
       repositoryId: repository.id,
       repository: repository,
     });

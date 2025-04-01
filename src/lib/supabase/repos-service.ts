@@ -137,7 +137,7 @@ export async function createRepository(
       .from("repositories")
       .insert({
         ...metadata,
-        status: "importing",
+        status: "queued",
         last_analyzed: null,
         error_message: null,
         current_stage: "Initializing repository",

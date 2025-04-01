@@ -134,6 +134,49 @@ export async function cleanupRepository(repoPath: string) {
 }
 
 /**
+ * Initializes and queues a repository for background import
+ * This function handles the quick initialization part that should complete within API time limits
+ */
+export async function initializeRepositoryImport(
+  repoUrl: string,
+  accessToken: string,
+  userId: string
+): Promise<Repository> {
+  try {
+    const metadata = await getRepositoryMetadata(repoUrl, accessToken);
+    let repository = await handleRepositoryCreationInSupabase(userId, metadata);
+
+    // If it's a new repository or not ready, update its status
+    if (repository.status !== "ready" && repository.status !== "importing") {
+      // Update to queued status
+      const supabase = await createClient();
+      const { data: updatedRepo, error } = await supabase
+        .from("repositories")
+        .update({
+          status: "queued",
+          current_stage: "Waiting in import queue",
+        })
+        .eq("id", repository.id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      repository = updatedRepo!;
+    }
+
+    // Queue the repository for background processing if not already ready
+    if (repository.status !== "ready") {
+      queueRepositoryImport(repository.id, repoUrl, accessToken, userId);
+    }
+
+    return repository;
+  } catch (error) {
+    console.error("Failed to initialize repository import:", error);
+    throw error;
+  }
+}
+
+/**
  * Main function to import a repository
  */
 export async function importRepository(
@@ -238,6 +281,55 @@ export async function importRepository(
       repository.id
     );
     console.error("Repository import failed:", error);
+    throw error;
+  }
+}
+
+const processingRepos = new Map<string, boolean>();
+
+export async function queueRepositoryImport(
+  repoId: string,
+  repoUrl: string,
+  accessToken: string,
+  userId: string
+): Promise<void> {
+  if (processingRepos.get(repoId)) {
+    return;
+  }
+
+  processingRepos.set(repoId, true);
+
+  // Don't await this - it runs independently of the HTTP response
+  processRepositoryImport(repoId, repoUrl, accessToken, userId)
+    .catch((error) => {
+      console.error(`Background import failed for ${repoId}:`, error);
+    })
+    .finally(() => {
+      processingRepos.delete(repoId);
+    });
+}
+
+async function processRepositoryImport(
+  repoId: string,
+  repoUrl: string,
+  accessToken: string,
+  userId: string
+): Promise<void> {
+  try {
+    // Perform the actual import
+    await importRepository(repoUrl, accessToken, userId);
+  } catch (error) {
+    // Update status to error if something fails
+    const supabase = await createClient();
+    await supabase
+      .from("repositories")
+      .update({
+        status: "error",
+        error_message: error instanceof Error ? error.message : String(error),
+        current_stage: "Import failed",
+      })
+      .eq("id", repoId);
+
     throw error;
   }
 }

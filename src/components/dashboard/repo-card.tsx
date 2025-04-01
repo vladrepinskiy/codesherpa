@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
 import { EnrichedRepository } from "@/types/repository";
-import { Trash2 } from "lucide-react";
+import { Trash2, Clock } from "lucide-react"; // Add Clock import
 import Link from "next/link";
 import { useState } from "react";
 
@@ -44,7 +44,11 @@ export function RepositoryCard({
   return (
     <Card
       className={`hover:shadow-md transition-shadow ${
-        isProcessing ? "border-blue-200 bg-blue-50/30" : ""
+        isProcessing
+          ? "border-blue-200 bg-blue-50/30"
+          : repository.status === "queued"
+          ? "border-amber-200 bg-amber-50/30"
+          : ""
       }`}
     >
       <CardHeader className='pb-2'>
@@ -62,7 +66,9 @@ export function RepositoryCard({
                 variant='ghost'
                 size='sm'
                 className='h-8 w-8 p-0 text-gray-500 hover:text-red-500'
-                disabled={isDeleting || isProcessing}
+                disabled={
+                  isDeleting || isProcessing || repository.status === "queued"
+                }
               >
                 <Trash2 size={16} />
               </Button>
@@ -109,6 +115,10 @@ export function RepositoryCard({
             <span className='text-green-500'>● Ready</span>
           ) : repository.status === "error" ? (
             <span className='text-red-500'>● Error</span>
+          ) : repository.status === "queued" ? (
+            <span className='text-amber-500 flex items-center'>
+              <Clock size={14} className='mr-1' /> Queued
+            </span>
           ) : (
             <span className='text-yellow-500'>● {repository.status}</span>
           )}
@@ -130,6 +140,10 @@ export function RepositoryCard({
         ) : repository.status === "error" ? (
           <div className='text-xs text-red-500 p-2 bg-red-50 rounded'>
             Error: {repository.error_message || "Unknown error occurred"}
+          </div>
+        ) : repository.status === "queued" ? (
+          <div className='text-xs text-amber-500 p-2 bg-amber-50 rounded flex items-center justify-center'>
+            <Clock size={14} className='mr-1' /> Waiting in import queue...
           </div>
         ) : (
           <div className='text-xs text-blue-500 p-2 bg-blue-50 rounded flex items-center justify-center'>
