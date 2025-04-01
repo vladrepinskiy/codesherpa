@@ -14,13 +14,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
-import { useRepositoryContext } from "../../../../contexts/repos-context";
 import {
   CheckCircle,
   AlertCircle,
   ArrowLeft,
   AlertTriangle,
 } from "lucide-react";
+import { useRepositoryContext } from "@/contexts/repos-context";
 
 export default function RepositoryImportForm() {
   const [repoUrl, setRepoUrl] = useState("");
@@ -44,7 +44,6 @@ export default function RepositoryImportForm() {
   const router = useRouter();
   const { triggerRefresh } = useRepositoryContext();
 
-  // Validate GitHub URL as user types
   useEffect(() => {
     if (repoUrl) {
       validateGithubUrl(repoUrl);
@@ -53,9 +52,7 @@ export default function RepositoryImportForm() {
     }
   }, [repoUrl]);
 
-  // GitHub URL validation function
   const validateGithubUrl = (url: string): boolean => {
-    // GitHub URL regex pattern
     const githubUrlPattern =
       /^https?:\/\/(www\.)?github\.com\/[a-zA-Z0-9_-]+\/[a-zA-Z0-9_-]+\/?$/;
 
@@ -72,10 +69,7 @@ export default function RepositoryImportForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!repoUrl) return;
-
-    // Validate URL before proceeding
     if (!validateGithubUrl(repoUrl)) {
       return;
     }
@@ -83,7 +77,6 @@ export default function RepositoryImportForm() {
     setLoading(true);
     setError(null);
 
-    // Show immediate feedback that we're starting
     setImportStatus({
       repositoryId: null,
       status: "started",
@@ -101,11 +94,11 @@ export default function RepositoryImportForm() {
       const data = await response.json();
 
       if (!response.ok) {
-        // Check for token expiration
         if (
           data.code === "GITHUB_TOKEN_EXPIRED" ||
           (data.error && data.error.includes("GitHub token"))
         ) {
+          // Handle the specific case where out github token has expired
           setSessionExpired(true);
           setImportStatus({
             repositoryId: null,
@@ -118,15 +111,12 @@ export default function RepositoryImportForm() {
         throw new Error(data.error || "Failed to import repository");
       }
 
-      // Import is already complete, set status to ready
       setImportStatus({
         repositoryId: data.repositoryId,
         status: "ready",
         currentStage: "Import complete!",
         errorMessage: null,
       });
-
-      // Refresh repository list
       triggerRefresh();
     } catch (error) {
       console.error("Import error:", error);
@@ -142,7 +132,6 @@ export default function RepositoryImportForm() {
     }
   };
 
-  // Function to reset the form and start over
   const resetForm = () => {
     setRepoUrl("");
     setError(null);
@@ -155,7 +144,6 @@ export default function RepositoryImportForm() {
     });
   };
 
-  // Handle logout for session expiration
   const handleReauthenticate = async () => {
     try {
       await logout();
@@ -265,6 +253,7 @@ export default function RepositoryImportForm() {
           {!importStatus.status && (
             <form
               onSubmit={handleSubmit}
+              autoComplete='off'
               className='space-y-4 animate-in fade-in duration-300'
             >
               <div className='space-y-2'>
@@ -273,11 +262,18 @@ export default function RepositoryImportForm() {
                 </label>
                 <Input
                   id='repoUrl'
+                  name='custom-repo-url'
                   placeholder='https://github.com/username/repository'
                   value={repoUrl}
                   onChange={(e) => setRepoUrl(e.target.value)}
                   disabled={loading}
                   required
+                  autoComplete='off'
+                  spellCheck='false'
+                  data-form-type='other'
+                  data-1p-ignore
+                  data-lpignore='true'
+                  data-protonpass-ignore='true'
                   className={`transition-all duration-200 focus:ring-2 focus:ring-offset-1 focus:ring-blue-500 ${
                     validationError ? "border-red-500" : ""
                   }`}

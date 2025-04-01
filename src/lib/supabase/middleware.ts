@@ -39,7 +39,10 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // If no user, respond by redirecting the user to the login page
+  if (!user && request.nextUrl.pathname.startsWith("/api")) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   if (
     !user &&
     !request.nextUrl.pathname.startsWith("/login") &&
@@ -51,8 +54,6 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // If user is signed in and the current path is /login,
-  // redirect the user to /dashboard
   if (user && request.nextUrl.pathname.startsWith("/auth")) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }

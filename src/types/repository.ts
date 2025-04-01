@@ -18,6 +18,12 @@ export interface Repository {
   updated_at: string;
 }
 
+export type EnrichedRepository = Repository & {
+  isFavorite: boolean;
+  lastAccessed: string;
+  notes?: string;
+};
+
 export interface UserRepository {
   id: string;
   user_id: string;

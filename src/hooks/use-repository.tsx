@@ -6,7 +6,6 @@ export const supabaseClient = createClient();
 const fetchRepository = async (id: string) => {
   const supabase = supabaseClient;
 
-  // Fetch repository data
   const { data: repository, error: repoError } = await supabase
     .from("repositories")
     .select("*, user_repositories!inner(is_favorite)")

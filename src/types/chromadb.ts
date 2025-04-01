@@ -1,4 +1,3 @@
-// Match exactly what ChromaDB expects - no null values allowed
 export type FileMetadata = Record<string, string | number | boolean>;
 
 // Helper that ensures we never return null values
@@ -15,11 +14,10 @@ export function createFileMetadata(
   const metadata: FileMetadata = {
     repositoryId,
     path,
-    language: language || "unknown", // Convert null to string
+    language: language || "unknown",
     isChunk: options?.isChunk || false,
   };
 
-  // Only add these properties if they exist (no nulls allowed)
   if (options?.chunkIndex !== undefined) {
     metadata.chunkIndex = options.chunkIndex;
   }
@@ -30,3 +28,14 @@ export function createFileMetadata(
 
   return metadata;
 }
+
+export interface RepositoryQueryResultItem {
+  content: string;
+  metadata: {
+    [key: string]: unknown;
+  };
+  distance?: number;
+  type: "code" | "discussion";
+}
+
+export type RepositoryQueryResult = RepositoryQueryResultItem[];

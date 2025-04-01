@@ -1,6 +1,13 @@
+import {
+  createFileMetadata,
+  RepositoryQueryResult,
+  RepositoryQueryResultItem,
+} from "@/types/chromadb";
+import { FileContent } from "@/types/repository";
 import { ChromaClient, Collection } from "chromadb";
+import { BATCH_SIZE, CHUNK_SIZE } from "@/config/processing";
+import { splitIntoChunks } from "./chunks-utils";
 
-// Singleton pattern to reuse the client
 let chromaClient: ChromaClient | null = null;
 
 export async function getChromaClient(): Promise<ChromaClient> {
@@ -29,6 +36,72 @@ export async function getOrCreateCollection(
 }
 
 /**
+ * Create ChromaDB collection and add file contents
+ */
+export async function storeInChromaDB(
+  repositoryId: string,
+  files: FileContent[],
+  collectionType: "code" | "discussions" = "code"
+): Promise<string> {
+  const collectionId = `repo_${repositoryId}_${collectionType}`;
+  const collection = await getOrCreateCollection(collectionId);
+  console.log(`🔌 Using collection: ${collectionId}`);
+  for (let i = 0; i < files.length; i += BATCH_SIZE) {
+    const batch = files.slice(i, i + BATCH_SIZE);
+    const chunks: {
+      ids: string[];
+      documents: string[];
+      metadatas: Record<string, string | number | boolean>[];
+    } = {
+      ids: [],
+      documents: [],
+      metadatas: [],
+    };
+
+    for (const file of batch) {
+      if (file.content.length > CHUNK_SIZE) {
+        const fileChunks = splitIntoChunks(file.content, CHUNK_SIZE);
+        fileChunks.forEach((chunk, index) => {
+          const chunkId = `${repositoryId}_${file.path}_${index}`;
+          chunks.ids.push(chunkId);
+          chunks.documents.push(chunk);
+          chunks.metadatas.push(
+            createFileMetadata(repositoryId, file.path, file.language, {
+              isChunk: true,
+              chunkIndex: index,
+              totalChunks: fileChunks.length,
+            })
+          );
+        });
+      } else {
+        const fileId = `${repositoryId}_${file.path}`;
+        chunks.ids.push(fileId);
+        chunks.documents.push(file.content);
+        chunks.metadatas.push(
+          createFileMetadata(repositoryId, file.path, file.language)
+        );
+      }
+    }
+
+    if (chunks.ids.length > 0) {
+      try {
+        await collection.add({
+          ids: chunks.ids,
+          documents: chunks.documents,
+          metadatas: chunks.metadatas,
+        });
+        console.log(`🏁 Added ${chunks.ids.length} chunks to ChromaDB`);
+      } catch (error) {
+        console.error(`💥 Error adding chunks to ChromaDB:`, error);
+        throw error;
+      }
+    }
+  }
+
+  return collectionId;
+}
+
+/**
  * Reset the entire ChromaDB instance - WARNING: Deletes all data!
  */
 export async function resetChromaDB(): Promise<void> {
@@ -46,9 +119,59 @@ export async function resetChromaDB(): Promise<void> {
   console.log("🏁 ChromaDB has been reset");
 }
 
-export async function queryRepository(repositoryId: string, query: string) {
-  console.log(`🔍 queryRepository called with:`, { repositoryId, query });
+/**
+ * Format the results for display in the chat UI
+ */
+export function formatChromaResults(results: RepositoryQueryResult) {
+  return results
+    .map((result) => {
+      return `
+FILE: ${result.metadata.path}
+CONTENT: ${result.content}
+${
+  result.type === "discussion" && result.metadata.url
+    ? `URL: ${result.metadata.url}`
+    : ""
+}
+---
+    `;
+    })
+    .join("\n");
+}
 
+/**
+ * Transforms raw ChromaDB query results into structured repository query result items
+ */
+function transformChromaResults(
+  results: {
+    documents?: (string | null)[][];
+    metadatas?: (Record<string, unknown> | null)[][];
+    distances?: number[][] | null;
+  },
+  type: "code" | "discussion"
+): RepositoryQueryResultItem[] {
+  const transformedResults: RepositoryQueryResultItem[] = [];
+  if (results.documents && results.documents[0]) {
+    for (let i = 0; i < results.documents[0].length; i++) {
+      transformedResults.push({
+        content: results.documents[0][i] || "",
+        metadata: results.metadatas?.[0]?.[i] || {},
+        distance: (results.distances && results.distances[0][i]) ?? i * 0.1,
+        type: type,
+      });
+    }
+  }
+  return transformedResults;
+}
+
+/**
+ * Query the ChromaDB collection for the given repository ID and query text
+ */
+export async function queryRepository(
+  repositoryId: string,
+  query: string
+): Promise<RepositoryQueryResult> {
+  console.log(`🔍 queryRepository called with:`, { repositoryId, query });
   try {
     const codeCollectionId = `repo_${repositoryId}_code`;
     const discussionsCollectionId = `repo_${repositoryId}_discussions`;
@@ -59,38 +182,20 @@ export async function queryRepository(repositoryId: string, query: string) {
 
     const codeResults = await codeCollection.query({
       queryTexts: [query],
-      nResults: 5,
+      nResults: Number(process.env.CHROMA_RESULTS_NUMBER) || 5,
     });
 
     const discussionResults = await discussionsCollection.query({
       queryTexts: [query],
-      nResults: 5,
+      nResults: Number(process.env.CHROMA_RESULTS_NUMBER) || 5,
     });
 
-    const codeResultsWithMetadata = [];
-    if (codeResults.documents && codeResults.documents[0]) {
-      for (let i = 0; i < codeResults.documents[0].length; i++) {
-        codeResultsWithMetadata.push({
-          content: codeResults.documents[0][i],
-          metadata: codeResults.metadatas?.[0]?.[i] || {},
-          // Use the distance if available, otherwise use a default ranking value
-          distance: codeResults.distances?.[0]?.[i] ?? i * 0.1,
-          type: "code",
-        });
-      }
-    }
+    const codeResultsWithMetadata = transformChromaResults(codeResults, "code");
 
-    const discussionResultsWithMetadata = [];
-    if (discussionResults.documents && discussionResults.documents[0]) {
-      for (let i = 0; i < discussionResults.documents[0].length; i++) {
-        discussionResultsWithMetadata.push({
-          content: discussionResults.documents[0][i],
-          metadata: discussionResults.metadatas?.[0]?.[i] || {},
-          distance: discussionResults.distances?.[0]?.[i] ?? i * 0.1 + 1,
-          type: "discussion",
-        });
-      }
-    }
+    const discussionResultsWithMetadata = transformChromaResults(
+      discussionResults,
+      "discussion"
+    );
 
     const combinedResults = [
       ...codeResultsWithMetadata,

@@ -1,22 +1,13 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import ChatContent from "./chat-content";
+import ChatContent from "@/components/chat/chat-content";
 
 export default async function RepositoryChatPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
   const supabase = await createClient();
-
-  // Check authentication
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/auth/login");
-  }
 
   const { id: repoId } = await params;
 
