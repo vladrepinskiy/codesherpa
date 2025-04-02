@@ -19,6 +19,11 @@ export default function ChatContent({ params, repository }: ChatContentProps) {
   const { messages, input, handleInputChange, handleSubmit, isLoading } =
     useChat({
       api: `/api/repositories/${params.id}/chat`,
+      maxSteps: 2, // Allow one tool call round-trip
+      // Optional: Handle errors that may occur during tool execution
+      onError: (error) => {
+        console.error("Error in chat:", error);
+      },
     });
 
   // Scroll to bottom when messages change

@@ -1,11 +1,12 @@
 import { createOpenAI } from "@ai-sdk/openai";
-import { Message, streamText } from "ai";
+import { streamText } from "ai";
 import {
   formatChromaResults,
   queryRepository,
 } from "@/lib/chromadb/chroma-client";
-import { getSystemMessage } from "@/lib/analysis/prompt-service";
 import { checkRepositoryAccess } from "@/lib/supabase/user-service";
+import { z } from "zod";
+import { getSystemMessageV2 } from "@/lib/analysis/prompt-service";
 
 export const maxDuration = 30;
 
@@ -16,23 +17,13 @@ export async function POST(
   try {
     const { id: repositoryId } = await params;
     const { messages } = await request.json();
-    const latestUserMessage = messages
-      .filter((m: Message) => m.role === "user")
-      .pop();
-    const query = latestUserMessage?.content || "";
-
     const accessResult = await checkRepositoryAccess(repositoryId);
     if (accessResult instanceof Response) {
       return accessResult;
     }
 
-    const results = await queryRepository(repositoryId, query);
-    const contextText = formatChromaResults(results);
-    const systemMessageContent = getSystemMessage(contextText);
-    const systemMessage = {
-      role: "system",
-      content: systemMessageContent,
-    };
+    const systemMessage = getSystemMessageV2();
+
     const messagesWithSystem = [systemMessage, ...messages];
 
     const openai = createOpenAI({
@@ -42,9 +33,36 @@ export async function POST(
     const result = streamText({
       model: openai("gpt-4o-mini"),
       messages: messagesWithSystem,
+      maxSteps: 2, // Allow one tool call round-trip
+      toolCallStreaming: true, // Enable streaming of tool calls
+      tools: {
+        searchRepository: {
+          description:
+            "Search the repository for relevant code files and information",
+          parameters: z.object({
+            query: z
+              .string()
+              .describe("The search query to find relevant code"),
+          }),
+          execute: async ({ query }: { query: string }) => {
+            try {
+              // Search the repository using ChromaDB
+              const results = await queryRepository(repositoryId, query);
+              // Format the results
+              return formatChromaResults(results);
+            } catch (error) {
+              console.error("Error querying repository:", error);
+              return "Failed to search repository.";
+            }
+          },
+        },
+      },
     });
 
-    return result.toDataStreamResponse();
+    return result.toDataStreamResponse({
+      getErrorMessage: (error) =>
+        `Error: ${error instanceof Error ? error.message : String(error)}`,
+    });
   } catch (error) {
     console.error("Error processing chat query:", error);
     return new Response(JSON.stringify({ error: "Failed to process query" }), {
