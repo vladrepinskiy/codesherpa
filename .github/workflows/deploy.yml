@@ -1,0 +1,38 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            # Navigate to project directory
+            cd ~/codesherpa
+
+            # Stop the current process
+            pm2 stop nextjs-app
+
+            # Pull the latest changes
+            git pull origin main
+
+            # Install dependencies (if needed)
+            npm ci
+
+            # Build the project
+            npm run build
+
+            # Restart the application
+            pm2 start npm --name "nextjs-app" -- start
+
+            # Optional: Show logs to confirm startup
+            pm2 logs nextjs-app --lines 10
