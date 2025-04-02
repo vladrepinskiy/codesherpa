@@ -11,7 +11,6 @@ export async function DELETE(
   try {
     const { id: repositoryId } = await params;
 
-    // Authenticate user
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -23,7 +22,6 @@ export async function DELETE(
       );
     }
 
-    // Verify the user has access to this repository
     const { data: userRepo, error: userRepoError } = await supabase
       .from("user_repositories")
       .select("repository_id")
@@ -38,7 +36,6 @@ export async function DELETE(
       );
     }
 
-    // Delete repository (cascading will take care of user_repositories and repository_files)
     const { error: deleteRepoError } = await supabase
       .from("repositories")
       .delete()
@@ -52,23 +49,17 @@ export async function DELETE(
       );
     }
 
-    // Use standardized collection names instead of querying the database
     const codeCollectionId = `repo_${repositoryId}_code`;
     const discussionsCollectionId = `repo_${repositoryId}_discussions`;
     const collectionIds = [codeCollectionId, discussionsCollectionId];
 
-    // Delete ChromaDB collections
     try {
       const chromaClient = await getChromaClient();
 
-      // Delete each collection with improved error handling
       for (const collectionId of collectionIds) {
         try {
-          // Check if collection exists before attempting to delete
           const collections = await chromaClient.listCollections();
-          const collectionExists = collections.some(
-            (c) => c === collectionId // Note: collections may be objects with a 'name' property
-          );
+          const collectionExists = collections.some((c) => c === collectionId);
 
           if (collectionExists) {
             await chromaClient.deleteCollection({ name: collectionId });
@@ -83,15 +74,12 @@ export async function DELETE(
             `Error with ChromaDB collection ${collectionId}:`,
             collectionError
           );
-          // Continue with other collections even if one fails
         }
       }
     } catch (chromaError) {
       console.error("Error connecting to ChromaDB:", chromaError);
-      // Continue even if ChromaDB deletion fails
     }
 
-    // Return success response
     return NextResponse.json({
       success: true,
       message: "Repository and all associated data deleted successfully",
