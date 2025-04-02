@@ -17,23 +17,19 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           passphrase: ${{ secrets.SSH_PASSPHRASE }}
           script: |
-            # Navigate to project directory
+            # Load NVM
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
+            # Verify environment is correctly loaded
+            node -v
+            npm -v
+            pm2 list
+
+            # Now run deployment commands
             cd ~/codesherpa
-
-            # Stop the current process
-            pm2 stop nextjs-app
-
-            # Pull the latest changes
+            pm2 stop codesherpa
             git pull origin main
-
-            # Install dependencies (if needed)
             npm ci
-
-            # Build the project
             npm run build
-
-            # Restart the application
-            pm2 start npm --name "nextjs-app" -- start
-
-            # Optional: Show logs to confirm startup
-            pm2 logs nextjs-app --lines 10
+            pm2 start npm --name "codesherpa" -- start
