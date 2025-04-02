@@ -221,13 +221,26 @@ export async function importRepository(
         metadata.name as string,
         accessToken
       );
-      const discussionContents = discussions.map((d) => ({
-        path: `${d.type}/${d.number}`,
-        content: `# ${d.title}\n\n${d.body}\n\nURL: ${d.url}\nAuthor: ${d.author}\nCreated: ${d.createdAt}`,
-        language: "markdown",
-        size_bytes: d.body.length + d.title.length,
-        last_modified: d.createdAt,
-      }));
+      const discussionContents = discussions.map((d) => {
+        // Combine all comments into a single string
+        const commentsText = d.comments
+          .map(
+            (comment) =>
+              `---\n**Comment by ${comment.author} on ${new Date(
+                comment.createdAt
+              ).toLocaleString()}**\n\n${comment.body}`
+          )
+          .join("\n\n");
+
+        return {
+          path: `${d.type}/${d.number}`,
+          content: `# ${d.title}\n\n${d.body}\n\nURL: ${d.url}\nAuthor: ${d.author}\nCreated: ${d.createdAt}\n\n## Comments\n\n${commentsText}`,
+          language: "markdown",
+          size_bytes:
+            d.body.length + d.title.length + (commentsText.length || 0),
+          last_modified: d.createdAt,
+        };
+      });
       await updateStage(
         `Creating vector embeddings for ${discussions.length} discussions`,
         repository.id

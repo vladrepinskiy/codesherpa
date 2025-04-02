@@ -85,7 +85,7 @@ export async function downloadRepositoryZip(
 }
 
 /**
- * Fetch discussions, PRs and issues from GitHub repository
+ * Fetch discussions, PRs and issues with their comments from GitHub repository
  */
 export async function fetchRepositoryDiscussions(
   owner: string,
@@ -101,6 +101,12 @@ export async function fetchRepositoryDiscussions(
     createdAt: string;
     type: "issue" | "pr" | "discussion";
     number: number;
+    comments: {
+      id: string;
+      body: string;
+      author: string;
+      createdAt: string;
+    }[];
   }[]
 > {
   const octokit = getOctokit(accessToken);
@@ -114,8 +120,22 @@ export async function fetchRepositoryDiscussions(
   });
 
   for (const issue of issues) {
-    // PRs appear in issues list but we'll get them separately)
+    // Skip PRs as they appear in issues list but we'll get them separately
     if (issue.pull_request) continue;
+
+    const { data: comments } = await octokit.issues.listComments({
+      owner,
+      repo,
+      issue_number: issue.number,
+      per_page: 100,
+    });
+
+    const commentsList = comments.map((comment) => ({
+      id: `comment_${comment.id}`,
+      body: comment.body || "",
+      author: comment.user?.login || "unknown",
+      createdAt: comment.created_at,
+    }));
 
     discussions.push({
       id: `issue_${issue.id}`,
@@ -126,6 +146,7 @@ export async function fetchRepositoryDiscussions(
       createdAt: issue.created_at,
       type: "issue" as const,
       number: issue.number,
+      comments: commentsList,
     });
   }
 
@@ -137,6 +158,37 @@ export async function fetchRepositoryDiscussions(
   });
 
   for (const pr of prs) {
+    // Inline code comments
+    const { data: reviewComments } = await octokit.pulls.listReviewComments({
+      owner,
+      repo,
+      pull_number: pr.number,
+      per_page: 100,
+    });
+
+    // General PR thread comments
+    const { data: issueComments } = await octokit.issues.listComments({
+      owner,
+      repo,
+      issue_number: pr.number,
+      per_page: 100,
+    });
+
+    const allComments = [
+      ...reviewComments.map((comment) => ({
+        id: `review_comment_${comment.id}`,
+        body: comment.body || "",
+        author: comment.user?.login || "unknown",
+        createdAt: comment.created_at,
+      })),
+      ...issueComments.map((comment) => ({
+        id: `issue_comment_${comment.id}`,
+        body: comment.body || "",
+        author: comment.user?.login || "unknown",
+        createdAt: comment.created_at,
+      })),
+    ];
+
     discussions.push({
       id: `pr_${pr.id}`,
       title: pr.title,
@@ -146,6 +198,7 @@ export async function fetchRepositoryDiscussions(
       createdAt: pr.created_at,
       type: "pr" as const,
       number: pr.number,
+      comments: allComments,
     });
   }
 
@@ -166,6 +219,16 @@ export async function fetchRepositoryDiscussions(
               }
               createdAt
               number
+              comments(first: 100) {
+                nodes {
+                  id
+                  body
+                  author {
+                    login
+                  }
+                  createdAt
+                }
+              }
             }
           }
         }
@@ -181,6 +244,20 @@ export async function fetchRepositoryDiscussions(
     const repoDiscussions = result.repository.discussions.nodes;
 
     for (const discussion of repoDiscussions) {
+      const commentsList = discussion.comments.nodes.map(
+        (comment: {
+          id: string;
+          body: string;
+          author: { login: string };
+          createdAt: string;
+        }) => ({
+          id: `discussion_comment_${comment.id}`,
+          body: comment.body,
+          author: comment.author?.login || "unknown",
+          createdAt: comment.createdAt,
+        })
+      );
+
       discussions.push({
         id: `discussion_${discussion.id}`,
         title: discussion.title,
@@ -190,6 +267,7 @@ export async function fetchRepositoryDiscussions(
         createdAt: discussion.createdAt,
         type: "discussion" as const,
         number: discussion.number,
+        comments: commentsList,
       });
     }
   } catch (error) {
