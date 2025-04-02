@@ -23,7 +23,7 @@ CodeSherpa is a prototype tool, that should help developers quickly understand a
 
 As of 02/04/2025 the project is hosted on [www.codesherpa.xyz](www.codesherpa.xyz), using two AWS EC2 instances. One is running the fullstack nextjs app, another is running the chromadb vector database. Instances are bound by a security group. Automatic GitHub workflow is setup to update the app on the server when changes are pushed to the main branch.
 
-**Why AWS? ** The initial plan was to setup a standalone ChromaDB running in the cloud, and to deploy a nextjs app on Vercel/Netlify/AWS Amplify like a normal human being would do. This approach proved unfeasible due to the fact that our repository import is a lengthy process, impossible to perform stable in a serverless environment. The final deployment stack is: git/ssh to update the project, pm2 to keep a nextjs app running, nginx to handle HTTPS traffic, and a security group to limit access to the instances. Also, a nextjs app requiring user auth is an extra layer of security in front of otherwise exposed ChromaDB.
+**Why AWS?** The initial plan was to setup a standalone ChromaDB running in the cloud, and to deploy a nextjs app on Vercel/Netlify/AWS Amplify like a normal human being would do. This approach proved unfeasible due to the fact that our repository import is a lengthy process, impossible to perform stable in a serverless environment. The final deployment stack is: git/ssh to update the project, pm2 to keep a nextjs app running, nginx to handle HTTPS traffic, and a security group to limit access to the instances. Also, a nextjs app requiring user auth is an extra layer of security in front of otherwise exposed ChromaDB.
 
 ## Development
 
