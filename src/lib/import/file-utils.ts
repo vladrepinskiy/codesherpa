@@ -10,6 +10,20 @@ const ignoreList = [
   "**/dist/**",
   "**/build/**",
   "**/.next/**",
+  "**/package-lock.json",
+  "**/pnpm-lock.yaml",
+  "**/yarn.lock",
+  "**/npm-shrinkwrap.json",
+  "**/coverage/**",
+  "**/generated/**",
+  "**/out/**",
+];
+
+// Lower threshold for specific file types that are typically large
+const reducedSizeThreshold = 100 * 1024; // 100KB
+const defaultThreshold = 512 * 1024; // 0,5MB
+const reducedSizeFilePatterns = [
+  /\.(json|yaml|yml|xml|csv|tsv|log|svg)$/i, // Data files
 ];
 
 function isBinaryPath(filePath: string): boolean {
@@ -55,6 +69,19 @@ function isBinaryPath(filePath: string): boolean {
 }
 
 /**
+ * Determines the appropriate size threshold for a file
+ */
+function getSizeThreshold(filePath: string): number {
+  const basename = path.basename(filePath);
+  for (const pattern of reducedSizeFilePatterns) {
+    if (pattern.test(basename) || pattern.test(filePath)) {
+      return reducedSizeThreshold;
+    }
+  }
+  return defaultThreshold;
+}
+
+/**
  * Maps popular programming languages file extensions to their human-readable names.
  */
 function getLanguageFromPath(filePath: string): string | null {
@@ -78,7 +105,7 @@ function getLanguageFromPath(filePath: string): string | null {
     ".cs": "C#",
     ".cpp": "C++",
     ".c": "C",
-    // Add more as needed
+    // TODO: add more, or expose to users to modify!
   };
 
   return extensionMap[extension] || null;
@@ -90,34 +117,47 @@ function getLanguageFromPath(filePath: string): string | null {
 export async function processRepositoryFiles(
   repoDir: string
 ): Promise<FileContent[]> {
+  console.log(`Starting repository file processing at ${repoDir}`);
   const files = await glob("**/*", {
     cwd: repoDir,
     ignore: ignoreList,
     nodir: true,
   });
 
+  console.log(`Found ${files.length} files after glob filtering`);
   const fileContents: FileContent[] = [];
+  let skippedCount = 0;
 
   for (const file of files) {
     try {
       const filePath = path.join(repoDir, file);
       const stats = await fs.stat(filePath);
-
-      // Skip large files over 1MB
-      if (stats.size > 1024 * 1024) {
-        console.log(`Skipping large file: ${file}`);
+      const sizeThreshold = getSizeThreshold(file);
+      if (stats.size > sizeThreshold) {
+        console.log(
+          `Skipping large file (${(stats.size / 1024).toFixed(2)}KB > ${(
+            sizeThreshold / 1024
+          ).toFixed(2)}KB threshold): ${file}`
+        );
+        skippedCount++;
         continue;
       }
-
-      // Skip binary files
       if (isBinaryPath(file)) {
         console.log(`Skipping binary file: ${file}`);
+        skippedCount++;
         continue;
       }
-
-      // Read file content
       const content = await fs.readFile(filePath, "utf-8");
-
+      // Additional content-based filtering
+      // Skip files with too many lines
+      const lineCount = content.split("\n").length;
+      if (lineCount > 5000) {
+        console.log(
+          `Skipping file with too many lines (${lineCount}): ${file}`
+        );
+        skippedCount++;
+        continue;
+      }
       fileContents.push({
         path: file,
         content,
@@ -127,8 +167,12 @@ export async function processRepositoryFiles(
       });
     } catch (error) {
       console.error(`Error processing file ${file}:`, error);
+      skippedCount++;
     }
   }
 
+  console.log(
+    `Repository processing complete. Included ${fileContents.length} files, skipped ${skippedCount} files.`
+  );
   return fileContents;
 }
