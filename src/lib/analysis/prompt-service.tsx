@@ -57,6 +57,20 @@ export function getTabQueryKeywords(tab: string) {
   }
 }
 
+export function getSystemMessageV2() {
+  return {
+    role: "system",
+    content: `You are CodeSherpa, an AI assistant that provides help with code repositories. 
+    Use the searchRepository tool to find relevant information. 
+    You need to formulate a query consisting of most relevant keywords, and you will receive semantic search results of the repository in return.
+    Analyze the received context carefully to provide accurate and helpful information.
+    Format your response in Markdown with clear sections and bullet points where appropriate.
+    Use URLs in the provided context to point to concrete issues, PRs or discussions.
+    If the context doesn't provide enough information for certain aspects, acknowledge this limitation.
+    `,
+  };
+}
+
 export function getSystemMessage(contextText: string) {
   return `You are an AI assistant that specializes in helping developers understand GitHub repositories and onboard to new projects. 
           
