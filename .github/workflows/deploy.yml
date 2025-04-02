@@ -23,6 +23,7 @@ jobs:
             # Stop the application
             cd ~/codesherpa
             pm2 stop codesherpa
+            pm2 delete codesherpa
             # Make sure we're using SSH for GitHub
             git remote set-url origin git@github.com:aetherjs/codesherpa.git
             # Pull the latest changes
@@ -30,4 +31,4 @@ jobs:
             # Continue with the deployment
             npm ci
             npm run build
-            pm2 start npm --name "codesherpa" -- start
+            pm2 start npm --name codesherpa -- run start -- -p 3000
