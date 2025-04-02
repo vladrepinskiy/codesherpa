@@ -7,36 +7,11 @@ import { FileContent } from "@/types/repository";
 import { ChromaClient, Collection } from "chromadb";
 import { BATCH_SIZE, CHUNK_SIZE } from "@/config/processing";
 import { splitIntoChunks } from "./chunks-utils";
-import { env as chromaEnv } from "chromadb-default-embed";
-import path from "path";
-import { mkdirSync } from "fs";
-
-/**
- * Configure ChromaDB cache directory for serverless deployments -
- * Vercel and AWS Lambda only allow writing to the /tmp directory.
- */
-export const isServerlessEnv =
-  process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME;
-if (isServerlessEnv) {
-  const tmpCacheDir = path.join("/tmp", ".cache", "chromadb");
-  try {
-    mkdirSync(tmpCacheDir, { recursive: true });
-    console.log(`Created ChromaDB cache directory at ${tmpCacheDir}`);
-    chromaEnv.cacheDir = tmpCacheDir;
-  } catch (error) {
-    console.warn(
-      `Warning: Failed to create ChromaDB cache directory: ${error}`
-    );
-  }
-}
 
 let chromaClient: ChromaClient | null = null;
 
 export async function getChromaClient(): Promise<ChromaClient> {
   if (!chromaClient) {
-    console.log("Environment variables available:");
-    console.log("CHROMA_DB_URL:", process.env.CHROMA_DB_URL);
-    console.log("NODE_ENV:", process.env.NODE_ENV);
     const chromaUrl = process.env.CHROMA_DB_URL || "http://chromadb:8000";
     console.log(`Attempting to connect to ChromaDB at: ${chromaUrl}`);
     chromaClient = new ChromaClient({

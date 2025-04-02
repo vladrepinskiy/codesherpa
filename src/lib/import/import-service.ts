@@ -20,7 +20,7 @@ import {
   updateStatus,
 } from "../supabase/repos-service";
 import { processRepositoryFiles } from "./file-utils";
-import { isServerlessEnv, storeInChromaDB } from "../chromadb/chroma-client";
+import { storeInChromaDB } from "../chromadb/chroma-client";
 
 /**
  * Creates a repository in supabase, or handles the retrieval of the existing one
@@ -65,9 +65,7 @@ async function handleRepositoryCreationInSupabase(
  */
 export async function cloneRepository(repoUrl: string, accessToken: string) {
   const repoId = uuidv4();
-  const repoDir = isServerlessEnv
-    ? path.join("/tmp", "repos", repoId)
-    : path.join(process.cwd(), "tmp", "repos", repoId);
+  const repoDir = path.join("/tmp", "repos", repoId);
   const zipPath = path.join(repoDir + ".zip");
 
   try {
