@@ -20,19 +20,13 @@ jobs:
             # Load NVM
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-
             # Stop the application
             cd ~/codesherpa
             pm2 stop codesherpa
-
-            # Fix the Git remote URL to use SSH instead of HTTPS
-            git remote -v
+            # Make sure we're using SSH for GitHub
             git remote set-url origin git@github.com:aetherjs/codesherpa.git
-            git remote -v
-
-            # Now pull should work
+            # Pull the latest changes
             git pull origin main
-
             # Continue with the deployment
             npm ci
             npm run build
