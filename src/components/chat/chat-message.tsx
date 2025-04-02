@@ -1,9 +1,8 @@
 "use client";
 
-import { Bot, User, Search } from "lucide-react";
-import ReactMarkdown from "react-markdown";
-import rehypeHighlight from "rehype-highlight";
-import "highlight.js/styles/github.css";
+import { Bot, User } from "lucide-react";
+import { MessageText } from "./message-text";
+import { ToolInvocation } from "./tool-invocation";
 
 interface ChatMessageProps {
   message: {
@@ -26,7 +25,6 @@ interface ChatMessageProps {
 }
 
 export function ChatMessage({ message }: ChatMessageProps) {
-  // If the message has parts, it might contain tool calls
   const hasParts = message.parts && message.parts.length > 0;
 
   return (
@@ -70,187 +68,18 @@ export function ChatMessage({ message }: ChatMessageProps) {
                   case "text":
                     return (
                       <div key={`text-${index}`}>
-                        <ReactMarkdown
-                          rehypePlugins={[rehypeHighlight]}
-                          components={{
-                            // All the existing component customizations
-                            p: (props) => (
-                              <p className='mb-4 leading-relaxed' {...props} />
-                            ),
-                            h1: (props) => (
-                              <h1
-                                className='mt-6 mb-3 text-xl font-semibold'
-                                {...props}
-                              />
-                            ),
-                            h2: (props) => (
-                              <h2
-                                className='mt-5 mb-3 text-lg font-semibold'
-                                {...props}
-                              />
-                            ),
-                            h3: (props) => (
-                              <h3
-                                className='mt-4 mb-2 text-base font-semibold'
-                                {...props}
-                              />
-                            ),
-                            ul: (props) => (
-                              <ul className='my-3 pl-6 list-disc' {...props} />
-                            ),
-                            ol: (props) => (
-                              <ol
-                                className='my-3 pl-6 list-decimal'
-                                {...props}
-                              />
-                            ),
-                            li: (props) => <li className='mb-2' {...props} />,
-                            blockquote: (props) => (
-                              <blockquote
-                                className='pl-4 my-4 border-l-4 border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400'
-                                {...props}
-                              />
-                            ),
-                            code: ({ className, ...props }) => {
-                              if (className) {
-                                return (
-                                  <code className={className} {...props} />
-                                );
-                              }
-                              return (
-                                <code
-                                  className='px-1.5 py-0.5 mx-0.5 bg-gray-200 dark:bg-gray-700 rounded font-mono text-sm'
-                                  {...props}
-                                />
-                              );
-                            },
-                            pre: (props) => (
-                              <pre
-                                className='my-4 rounded-md overflow-x-auto'
-                                {...props}
-                              />
-                            ),
-                            table: (props) => (
-                              <div className='overflow-x-auto my-4'>
-                                <table
-                                  className='min-w-full divide-y divide-gray-300 dark:divide-gray-700'
-                                  {...props}
-                                />
-                              </div>
-                            ),
-                            th: (props) => (
-                              <th
-                                className='px-3 py-2 text-left text-xs font-medium uppercase tracking-wider bg-gray-100 dark:bg-gray-800'
-                                {...props}
-                              />
-                            ),
-                            td: (props) => (
-                              <td
-                                className='px-3 py-2 border-t border-gray-200 dark:border-gray-800'
-                                {...props}
-                              />
-                            ),
-                            hr: (props) => (
-                              <hr
-                                className='my-6 border-gray-200 dark:border-gray-800'
-                                {...props}
-                              />
-                            ),
-                            a: (props) => (
-                              <a
-                                className='text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 underline'
-                                {...props}
-                              />
-                            ),
-                          }}
-                        >
-                          {part.text}
-                        </ReactMarkdown>
+                        <MessageText content={part.text || ""} />
                       </div>
                     );
 
                   case "tool-invocation":
-                    const toolInvocation = part.toolInvocation;
-                    if (toolInvocation?.toolName === "searchRepository") {
-                      switch (toolInvocation.state) {
-                        case "partial-call":
-                          return (
-                            <div
-                              key={`tool-${index}`}
-                              className='bg-gray-100 dark:bg-gray-700 p-2 rounded-md mb-2'
-                            >
-                              <div className='flex items-center text-blue-500'>
-                                <Search className='h-4 w-4 mr-1' />
-                                <span className='text-sm font-medium'>
-                                  Searching repository...
-                                </span>
-                              </div>
-                            </div>
-                          );
-                        case "call":
-                          return (
-                            <div
-                              key={`tool-${index}`}
-                              className='bg-gray-100 dark:bg-gray-700 p-2 rounded-md mb-2'
-                            >
-                              <div className='flex items-center text-blue-500'>
-                                <Search className='h-4 w-4 mr-1' />
-                                <span className='text-sm font-medium'>
-                                  Searching for: {toolInvocation.args?.query}
-                                </span>
-                              </div>
-                            </div>
-                          );
-                        case "result":
-                          return (
-                            <div
-                              key={`tool-${index}`}
-                              className='bg-gray-100 dark:bg-gray-700 p-2 rounded-md mb-3 mt-2'
-                            >
-                              <div className='flex items-center text-green-600 mb-1'>
-                                <Search className='h-4 w-4 mr-1' />
-                                <span className='text-sm font-medium'>
-                                  Search results for:{" "}
-                                  {toolInvocation.args?.query}
-                                </span>
-                              </div>
-                              <div className='text-sm text-gray-600 dark:text-gray-300 border-t border-gray-200 dark:border-gray-600 pt-2 mt-1'>
-                                <ReactMarkdown
-                                  rehypePlugins={[rehypeHighlight]}
-                                  components={{
-                                    // Same component customizations as above
-                                    code: ({ className, ...props }) => {
-                                      if (className) {
-                                        return (
-                                          <code
-                                            className={className}
-                                            {...props}
-                                          />
-                                        );
-                                      }
-                                      return (
-                                        <code
-                                          className='px-1.5 py-0.5 mx-0.5 bg-gray-200 dark:bg-gray-700 rounded font-mono text-xs'
-                                          {...props}
-                                        />
-                                      );
-                                    },
-                                    pre: (props) => (
-                                      <pre
-                                        className='my-2 rounded-md overflow-x-auto text-xs'
-                                        {...props}
-                                      />
-                                    ),
-                                  }}
-                                >
-                                  {toolInvocation.result || "No results found"}
-                                </ReactMarkdown>
-                              </div>
-                            </div>
-                          );
-                      }
-                    }
-                    return null;
+                    return part.toolInvocation ? (
+                      <ToolInvocation
+                        key={`tool-${index}`}
+                        toolInvocation={part.toolInvocation}
+                        index={index}
+                      />
+                    ) : null;
 
                   default:
                     return null;
@@ -259,20 +88,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
             </div>
           ) : (
             // Default rendering for backward compatibility
-            <div className='prose dark:prose-invert prose-sm max-w-none'>
-              <ReactMarkdown
-                rehypePlugins={[rehypeHighlight]}
-                components={{
-                  // All the existing component customizations from the original file
-                  p: (props) => (
-                    <p className='mb-4 leading-relaxed' {...props} />
-                  ),
-                  // ... rest of the components
-                }}
-              >
-                {message.content}
-              </ReactMarkdown>
-            </div>
+            <MessageText content={message.content} />
           )
         ) : (
           <p className='whitespace-pre-wrap text-white'>{message.content}</p>
