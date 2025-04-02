@@ -99,3 +99,6 @@ Some example questions:
 - [ ] Setup a monitoring system to track the health of the application in the EC2
 - [ ] Move away from Supabase to avoid vendor lock-in and overall getting charged in general
 - [ ] Improve onboarding generation process with more intelligent tool use and enriched data mined from the repository
+- [ ] Add a placeholder page to handle redeployment process without nginx showing an ugly 502
+- [ ] Improve branch security, PR rules, document issues in GitHub to open project to contributions
+- [ ] Add a LICENSE
