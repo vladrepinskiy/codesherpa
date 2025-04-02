@@ -84,11 +84,9 @@ export async function cloneRepository(repoUrl: string, accessToken: string) {
     zip.extractAllTo(repoDir, true);
     console.log(`Repository zip extracted to ${repoDir}`);
 
-    // The extracted content is in a subdirectory, move it up one level
     const files = await fs.readdir(repoDir);
     const extractedDir = path.join(repoDir, files[0]);
 
-    // Move all files from subdirectory to the main repo directory
     const extractedFiles = await fs.readdir(extractedDir);
     for (const file of extractedFiles) {
       const sourcePath = path.join(extractedDir, file);
@@ -144,9 +142,7 @@ export async function initializeRepositoryImport(
     const metadata = await getRepositoryMetadata(repoUrl, accessToken);
     let repository = await handleRepositoryCreationInSupabase(userId, metadata);
 
-    // If it's a new repository or not ready, update its status
     if (repository.status !== "ready" && repository.status !== "importing") {
-      // Update to queued status
       const supabase = await createClient();
       const { data: updatedRepo, error } = await supabase
         .from("repositories")
@@ -161,8 +157,6 @@ export async function initializeRepositoryImport(
       if (error) throw error;
       repository = updatedRepo!;
     }
-
-    // Queue the repository for background processing if not already ready
     if (repository.status !== "ready") {
       queueRepositoryImport(repository.id, repoUrl, accessToken, userId);
     }
@@ -208,7 +202,6 @@ export async function importRepository(
       await cleanRepositoryFiles(repository.id);
 
       for (const file of files) {
-        // TODO: bulk create
         await supabase.from("repository_files").insert({
           repository_id: repository.id,
           path: file.path,
@@ -246,7 +239,6 @@ export async function importRepository(
       );
       await updateStage("Storing discussion metadata", repository.id);
       for (const discussion of discussions) {
-        // TODO: bulk create
         await supabase.from("repository_discussions").insert({
           repository_id: repository.id,
           external_id: discussion.id,
@@ -314,10 +306,8 @@ async function processRepositoryImport(
   userId: string
 ): Promise<void> {
   try {
-    // Perform the actual import
     await importRepository(repoUrl, accessToken, userId);
   } catch (error) {
-    // Update status to error if something fails
     const supabase = await createClient();
     await supabase
       .from("repositories")

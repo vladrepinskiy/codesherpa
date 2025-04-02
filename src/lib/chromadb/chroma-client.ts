@@ -110,7 +110,6 @@ export async function storeInChromaDB(
           totalProcessedFiles++;
         } catch (error) {
           console.error(`❌ Error processing file ${file.path}:`, error);
-          // Continue with next file
         }
       }
       if (chunks.ids.length > 0) {
@@ -123,14 +122,12 @@ export async function storeInChromaDB(
               chunks.metadatas[0]
             )}`
           );
-          // Create a timeout promise that rejects after 60 seconds
           const timeout = new Promise((_, reject) => {
             setTimeout(
               () => reject(new Error("Operation timed out after 60 seconds")),
               60000
             );
           });
-          // Race the add operation against the timeout
           await Promise.race([
             collection.add({
               ids: chunks.ids,
@@ -149,9 +146,7 @@ export async function storeInChromaDB(
             console.error(`Error details: ${error.message}`);
             console.error(`Error stack: ${error.stack}`);
           }
-          // Log the ChromaDB collection details (without sensitive info)
           console.log(`🔍 Collection information: ${collectionId}`);
-          // Don't throw here, continue with next batch
           console.log(
             `⚠️ Skipping current batch due to error, continuing with next batch`
           );
@@ -168,8 +163,6 @@ export async function storeInChromaDB(
       console.error(`Error details: ${error.message}`);
       console.error(`Error stack: ${error.stack}`);
     }
-
-    // Return the collection ID so processing can continue
     console.log(`⚠️ Returning collection ID despite errors: ${collectionId}`);
     return collectionId;
   }
@@ -180,7 +173,6 @@ export async function storeInChromaDB(
  */
 export async function resetChromaDB(): Promise<void> {
   console.log("🔥 Resetting ChromaDB...");
-  // ChromaDB has a reset API that can be called
   const path = `${
     process.env.CHROMA_API_URL || "http://chromadb:8000"
   }/api/v1/reset`;

@@ -13,7 +13,6 @@ import {
 import useSWR from "swr";
 import { useParams } from "next/navigation";
 
-// Fetch function for SWR
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 interface IntegrityData {
@@ -42,8 +41,8 @@ export default function SyncStatusCard() {
     `/api/repositories/${repositoryId}/integrity`,
     fetcher,
     {
-      refreshInterval: 60000, // Refresh every minute
-      revalidateOnFocus: false, // Don't revalidate on window focus
+      refreshInterval: 60000,
+      revalidateOnFocus: false,
     }
   );
 

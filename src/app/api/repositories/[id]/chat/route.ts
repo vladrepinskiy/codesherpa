@@ -33,8 +33,8 @@ export async function POST(
     const result = streamText({
       model: openai("gpt-4o-mini"),
       messages: messagesWithSystem,
-      maxSteps: 2, // Allow one tool call round-trip
-      toolCallStreaming: true, // Enable streaming of tool calls
+      maxSteps: 2,
+      toolCallStreaming: true,
       tools: {
         searchRepository: {
           description:
@@ -46,9 +46,7 @@ export async function POST(
           }),
           execute: async ({ query }: { query: string }) => {
             try {
-              // Search the repository using ChromaDB
               const results = await queryRepository(repositoryId, query);
-              // Format the results
               return formatChromaResults(results);
             } catch (error) {
               console.error("Error querying repository:", error);

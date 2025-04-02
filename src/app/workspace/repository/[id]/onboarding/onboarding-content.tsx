@@ -24,7 +24,6 @@ export default function OnboardingContent({
     params.id
   );
 
-  // Handle tab change
   const handleTabChange = (tab: string) => {
     if (!content[tab] && !isLoading[tab]) {
       generateContent(tab);
@@ -39,7 +38,6 @@ export default function OnboardingContent({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Render content for a specific tab
   const renderTabContent = (tab: string) => {
     if (isLoading[tab]) {
       return (
@@ -61,7 +59,6 @@ export default function OnboardingContent({
           <ReactMarkdown
             rehypePlugins={[rehypeHighlight]}
             components={{
-              // Add Tailwind classes to elements for better spacing - mirroring chat-message.tsx
               p: (props) => <p className='mb-4 leading-relaxed' {...props} />,
 
               h1: (props) => (
@@ -92,11 +89,9 @@ export default function OnboardingContent({
               ),
 
               code: ({ className, ...props }) => {
-                // Keep the normal code block styling for multi-line code
                 if (className) {
                   return <code className={className} {...props} />;
                 }
-                // Add style for inline code
                 return (
                   <code
                     className='px-1.5 py-0.5 mx-0.5 bg-gray-200 dark:bg-gray-700 rounded font-mono text-sm'

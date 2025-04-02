@@ -1,9 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { Repository } from "@/types/repository";
 import { Octokit } from "@octokit/rest";
-import { writeFile } from "fs/promises"; // Import fs/promises properly at the top
+import { writeFile } from "fs/promises";
 
-// Add this new function to create an Octokit instance with the provided token
 export function getOctokit(accessToken: string): Octokit {
   return new Octokit({ auth: accessToken });
 }
@@ -40,9 +39,6 @@ export async function getRepositoryMetadata(
   accessToken: string
 ): Promise<Partial<Repository>> {
   const octokit = getOctokit(accessToken);
-
-  // Parse the owner and repo from URL
-  // Format: https://github.com/owner/repo
   const urlParts = new URL(repoUrl).pathname.split("/").filter(Boolean);
   const owner = urlParts[0];
   const repo = urlParts[1];
@@ -110,7 +106,6 @@ export async function fetchRepositoryDiscussions(
   const octokit = getOctokit(accessToken);
   const discussions = [];
 
-  // Fetch issues
   const { data: issues } = await octokit.issues.listForRepo({
     owner,
     repo,
@@ -119,7 +114,7 @@ export async function fetchRepositoryDiscussions(
   });
 
   for (const issue of issues) {
-    // Skip PRs (they appear in issues list but we'll get them separately)
+    // PRs appear in issues list but we'll get them separately)
     if (issue.pull_request) continue;
 
     discussions.push({
@@ -134,7 +129,6 @@ export async function fetchRepositoryDiscussions(
     });
   }
 
-  // Fetch PRs
   const { data: prs } = await octokit.pulls.list({
     owner,
     repo,
@@ -155,7 +149,6 @@ export async function fetchRepositoryDiscussions(
     });
   }
 
-  // Fetch discussions if the repo has GitHub Discussions enabled
   try {
     // Note: This uses the GraphQL API since REST API doesn't have discussions endpoint
     const result = await octokit.graphql(

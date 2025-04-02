@@ -17,7 +17,6 @@ export function useRepositoriesGallery(
     Record<string, string>
   >({});
 
-  // Use a ref to track which repositories we're currently polling
   const pollingReposRef = useRef<Set<string>>(new Set());
 
   const { data, error, isLoading, mutate } = useSWR(
@@ -70,7 +69,6 @@ export function useRepositoriesGallery(
       setProcessingRepos(newProcessingRepos);
     }
 
-    // Update which repos we should be polling
     pollingReposRef.current = new Set(newIds);
   }, [data, processingRepos]);
 
@@ -100,7 +98,6 @@ export function useRepositoriesGallery(
             hasChanges = true;
             shouldRefreshData = true;
 
-            // Show notification
             if (statusData.status === "ready") {
               toast.success(`Repository analysis complete!`);
             } else {
@@ -127,7 +124,6 @@ export function useRepositoriesGallery(
         setProcessingRepos(updatedProcessingRepos);
       }
 
-      // If there are no more repos to poll, clear the interval
       if (pollingReposRef.current.size === 0) {
         clearInterval(intervalId);
         mutate();
