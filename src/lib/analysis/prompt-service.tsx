@@ -1,20 +1,14 @@
-interface TabPromptOptions {
-  repositoryName: string;
-}
-
-export function getTabPrompt(tab: string, options: TabPromptOptions) {
-  const { repositoryName } = options;
-
+export function getTabPrompt(tab: string) {
   switch (tab) {
     case "overview":
-      return `Create a comprehensive overview of the "${repositoryName}" repository. Include:
+      return `Create a comprehensive overview of the repository. Include:
 1. A clear, concise description of what the project does and its purpose
 2. The main goals and objectives of the project
 3. Who would use this project and why
 Base your analysis on the repository content below.`;
 
     case "structure":
-      return `Analyze the structure of the "${repositoryName}" repository. Include:
+      return `Analyze the structure of the repository. Include:
 1. A high-level overview of how the codebase is organized
 2. Key directories and their purpose
 3. Important files that new contributors should understand first
@@ -22,7 +16,7 @@ Base your analysis on the repository content below.`;
 Base your analysis on the repository content below.`;
 
     case "setup":
-      return `Provide setup instructions for the "${repositoryName}" repository. Include:
+      return `Provide setup instructions for the repository. Include:
 1. Required prerequisites and dependencies
 2. Step-by-step installation guide
 3. How to set up a development environment
@@ -30,7 +24,7 @@ Base your analysis on the repository content below.`;
 Base your instructions on the repository content below.`;
 
     case "contribute":
-      return `Explain how to contribute to the "${repositoryName}" repository. Include:
+      return `Explain how to contribute to the repository. Include:
 1. Guidelines for contribution
 2. Workflow for submitting changes
 3. Good first issues or areas where new contributors can help
@@ -38,7 +32,7 @@ Base your instructions on the repository content below.`;
 Base your explanation on the repository content below.`;
 
     default:
-      return `Provide a general overview of the "${repositoryName}" repository.`;
+      return `Provide a general overview of the repository.`;
   }
 }
 

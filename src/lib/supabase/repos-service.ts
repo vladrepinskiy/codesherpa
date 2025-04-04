@@ -245,5 +245,5 @@ export async function getRepoName(repoId: string) {
     .eq("id", repoId)
     .single();
   if (error) throw error;
-  return repository?.name;
+  return repository?.name || "Project";
 }
