@@ -10,7 +10,6 @@ import {
   getTabQueryKeywords,
 } from "@/lib/analysis/prompt-service";
 import { checkRepositoryAccess } from "@/lib/supabase/user-service";
-import { getRepoName } from "@/lib/supabase/repos-service";
 
 export const maxDuration = 60;
 
@@ -27,13 +26,11 @@ export async function POST(
       return accessResult;
     }
 
-    const repoName = await getRepoName(repositoryId);
-
     const query = getTabQueryKeywords(tab);
     const results = await queryRepository(repositoryId, query);
     const contextText = formatChromaResults(results);
 
-    const prompt = getTabPrompt(tab, repoName);
+    const prompt = getTabPrompt(tab);
     const systemMessage = getSystemMessage(contextText);
 
     const openai = createOpenAI({

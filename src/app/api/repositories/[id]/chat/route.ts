@@ -16,7 +16,7 @@ export async function POST(
 ) {
   try {
     const { id: repositoryId } = await params;
-    const { messages } = await request.json();
+    const { messages, contextHistory } = await request.json();
     const accessResult = await checkRepositoryAccess(repositoryId);
     if (accessResult instanceof Response) {
       return accessResult;
@@ -24,7 +24,16 @@ export async function POST(
 
     const systemMessage = getSystemMessageV2();
 
-    const messagesWithSystem = [systemMessage, ...messages];
+    let messagesWithSystem = [systemMessage, ...messages];
+    if (contextHistory && contextHistory.length > 0) {
+      const contextMessage = {
+        role: "system",
+        content:
+          "Previously retrieved repository context:\n\n" +
+          contextHistory.join("\n\n"),
+      };
+      messagesWithSystem = [systemMessage, contextMessage, ...messages];
+    }
 
     const openai = createOpenAI({
       apiKey: process.env.OPENAI_API_KEY,

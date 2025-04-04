@@ -1,7 +1,7 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,11 +15,38 @@ interface ChatContentProps {
 
 export default function ChatContent({ params, repository }: ChatContentProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [contextHistory, setContextHistory] = useState<string[]>([]);
 
   const { messages, input, handleInputChange, handleSubmit, isLoading } =
     useChat({
       api: `/api/repositories/${params.id}/chat`,
       maxSteps: 2,
+      body: {
+        contextHistory,
+      },
+      onResponse: (response) => {
+        if (response.status === 200) {
+          const lastMessage = messages[messages.length - 1];
+          if (lastMessage?.parts) {
+            const toolInvocations = lastMessage.parts
+              .filter((part) => part.type === "tool-invocation")
+              .map((part) => {
+                const toolPart = part as {
+                  toolInvocation?: { result?: string; state: string };
+                };
+                return toolPart.toolInvocation?.state === "result" &&
+                  toolPart.toolInvocation?.result
+                  ? toolPart.toolInvocation.result
+                  : null;
+              })
+              .filter(Boolean) as string[];
+
+            if (toolInvocations.length > 0) {
+              setContextHistory((prev) => [...prev, ...toolInvocations]);
+            }
+          }
+        }
+      },
       onError: (error) => {
         console.error("Error in chat:", error);
       },
